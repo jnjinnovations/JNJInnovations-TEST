@@ -1,0 +1,8 @@
+{
+  "name": "Remix JNJ Innovations",
+  "description": "Michigan\u0027s SMB Technology and Management Consulting Partner - We diagnose, automate, and intelligize your operations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

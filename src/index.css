@@ -1,0 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Hanken Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Custom palette matching Consulting Modernist color guide */
+  --color-jnj-navy: #0A1628;
+  --color-jnj-silver: #C0C0C0;
+  --color-jnj-slate: #45474c;
+  --color-jnj-bg: #fbf8fa;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-jnj-bg);
+  color: #1b1b1d;
+}
+
+/* Background blueprint grid styling */
+.blueprint-grid {
+  background-image: 
+    linear-gradient(to right, rgba(192, 192, 192, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(192, 192, 192, 0.08) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Background radial dot grid styling */
+.blueprint-dots {
+  background-image: radial-gradient(rgba(197, 198, 205, 0.25) 0.8px, transparent 0.8px);
+  background-size: 32px 32px;
+}
+
+/* Technical dividers as described in the layout rules */
+.technical-divider {
+  position: relative;
+}
+.technical-divider::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60%;
+  height: 1px;
+  background-color: var(--color-jnj-silver);
+  opacity: 0.5;
+}
+
+.technical-divider-center {
+  position: relative;
+}
+.technical-divider-center::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background-color: var(--color-jnj-silver);
+  opacity: 0.5;
+}
+
+/* Tech interface corners style */
+.corner-accent {
+  position: relative;
+}
+.corner-accent::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: 12px;
+  height: 12px;
+  border-top: 2px solid var(--color-jnj-navy);
+  border-left: 2px solid var(--color-jnj-navy);
+}
+
