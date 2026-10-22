@@ -220,13 +220,26 @@ export default function GitHubCommitModal({
           <form onSubmit={handleCommit} className="space-y-4">
             
             {/* Target File Info Card */}
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-between text-xs">
-              <div className="space-y-0.5">
-                <span className="font-mono text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                  Target File in Repository
-                </span>
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row justify-between sm:items-center gap-3 text-xs">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                    Connected Repository
+                  </span>
+                  <a
+                    href={`https://github.com/${config.owner || 'jnj-innovations'}/${config.repo || 'remix-jnj-innovations'}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[11px] font-semibold text-sky-700 hover:underline flex items-center gap-1 font-mono"
+                  >
+                    {config.owner || 'jnj-innovations'}/{config.repo || 'remix-jnj-innovations'}
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                </div>
                 <div className="font-mono text-slate-800 font-semibold flex items-center gap-1.5">
                   <span className="text-[#0A1628]">src/data/defaultEbooks.ts</span>
+                  <span className="text-slate-400">·</span>
+                  <span className="text-slate-500">{config.branch || 'main'} branch</span>
                   <span className="text-slate-400">·</span>
                   <span className="text-slate-500">{ebooks.length} Playbooks</span>
                 </div>
@@ -239,7 +252,7 @@ export default function GitHubCommitModal({
                   className="flex items-center gap-1 text-[11px] font-semibold text-slate-600 hover:text-[#0A1628] bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg cursor-pointer"
                 >
                   <Sliders className="w-3 h-3" />
-                  {showConfigSettings ? 'Hide Repo Settings' : 'Configure Repo'}
+                  {showConfigSettings ? 'Hide Repo Settings' : 'Edit Token / Settings'}
                 </button>
               </div>
             </div>
@@ -325,17 +338,25 @@ export default function GitHubCommitModal({
                 </div>
 
                 {/* Token instructions tip */}
-                <div className="bg-sky-50 border border-sky-200 rounded-lg p-3 text-xs text-sky-900 space-y-1">
-                  <div className="font-semibold flex items-center gap-1.5">
-                    <Key className="w-3.5 h-3.5 text-sky-700" />
-                    How to create your GitHub Token (30 seconds):
+                <div className="bg-sky-50 border border-sky-200 rounded-lg p-3 text-xs text-sky-900 space-y-1.5">
+                  <div className="font-semibold flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Key className="w-3.5 h-3.5 text-sky-700" />
+                      Create your GitHub Token in 1-Click:
+                    </span>
+                    <a
+                      href="https://github.com/settings/tokens/new?description=JNJ%20Innovations%20Store%20Sync&scopes=repo"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[11px] font-bold text-sky-700 hover:text-sky-900 underline flex items-center gap-1"
+                    >
+                      Generate Pre-Scoped Token
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
                   </div>
-                  <ol className="list-decimal list-inside text-[11px] text-sky-800 space-y-0.5">
-                    <li>Open <strong>github.com/settings/tokens</strong> (Developer Settings → Personal Access Tokens).</li>
-                    <li>Click <strong>Generate new token (classic)</strong>.</li>
-                    <li>Select the <strong>repo</strong> checkbox (Full control of private repositories).</li>
-                    <li>Copy and paste the token above. It is stored strictly in your browser.</li>
-                  </ol>
+                  <p className="text-[11px] text-sky-800 leading-relaxed">
+                    Click the link above to open GitHub with the <code>repo</code> scope pre-selected. Click <strong>Generate token</strong> at the bottom of the GitHub page, then paste the generated token into the field above.
+                  </p>
                 </div>
 
                 {/* Connection Test feedback */}

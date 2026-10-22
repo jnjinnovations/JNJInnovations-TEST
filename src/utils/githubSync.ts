@@ -11,25 +11,34 @@ export interface GitHubSyncConfig {
 const GITHUB_CONFIG_KEY = 'jnj_github_sync_config_v1';
 const LAST_COMMITTED_KEY = 'jnj_last_committed_catalog_v1';
 
+export const DEFAULT_GITHUB_CONFIG: GitHubSyncConfig = {
+  owner: 'jnj-innovations',
+  repo: 'remix-jnj-innovations',
+  branch: 'main',
+  token: '',
+  autoCommit: false
+};
+
 export function getGitHubConfig(): GitHubSyncConfig {
   if (typeof window === 'undefined') {
-    return { owner: '', repo: '', branch: 'main', token: '', autoCommit: false };
+    return DEFAULT_GITHUB_CONFIG;
   }
   try {
     const raw = localStorage.getItem(GITHUB_CONFIG_KEY);
     if (raw) {
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      return {
+        owner: parsed.owner || DEFAULT_GITHUB_CONFIG.owner,
+        repo: parsed.repo || DEFAULT_GITHUB_CONFIG.repo,
+        branch: parsed.branch || DEFAULT_GITHUB_CONFIG.branch,
+        token: parsed.token || '',
+        autoCommit: typeof parsed.autoCommit === 'boolean' ? parsed.autoCommit : false
+      };
     }
   } catch (e) {
     console.error('Failed to parse GitHub config:', e);
   }
-  return {
-    owner: '',
-    repo: '',
-    branch: 'main',
-    token: '',
-    autoCommit: false
-  };
+  return DEFAULT_GITHUB_CONFIG;
 }
 
 export function saveGitHubConfig(config: GitHubSyncConfig): void {
