@@ -26,8 +26,11 @@ import {
   Layers,
   ArrowLeft,
   Sparkles,
-  Edit3
+  Edit3,
+  GitCommit
 } from 'lucide-react';
+import GitHubCommitModal from './GitHubCommitModal';
+import { getGitHubConfig, commitCatalogToGitHub } from '../utils/githubSync';
 
 interface EbookAdminViewProps {
   ebooks: EbookItem[];
@@ -84,6 +87,7 @@ export default function EbookAdminView({
   const [newBookStock, setNewBookStock] = useState(50);
   const [newBookUnlimited, setNewBookUnlimited] = useState(false);
   const [newBookCoverImage, setNewBookCoverImage] = useState('');
+  const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -112,6 +116,16 @@ export default function EbookAdminView({
     onUpdateEbooks(updatedList);
     saveStoredEbooks(updatedList);
     showToast('Catalog updated successfully');
+
+    // If auto-commit is enabled in GitHub settings, sync directly to GitHub
+    const ghConfig = getGitHubConfig();
+    if (ghConfig.autoCommit && ghConfig.owner && ghConfig.repo && ghConfig.token) {
+      commitCatalogToGitHub(ghConfig, updatedList, `Auto-sync catalog updates via Admin Studio`).then(res => {
+        if (res.success) {
+          showToast(`Committed to GitHub (${res.commitSha})`);
+        }
+      });
+    }
   };
 
   // Cover design updater
@@ -189,6 +203,16 @@ export default function EbookAdminView({
     setNewBookCoverImage('');
     setIsAddModalOpen(false);
     showToast(`Created new playbook: ${newBook.title}`);
+
+    // If auto-commit is enabled in GitHub settings, sync directly to GitHub
+    const ghConfig = getGitHubConfig();
+    if (ghConfig.autoCommit && ghConfig.owner && ghConfig.repo && ghConfig.token) {
+      commitCatalogToGitHub(ghConfig, updated, `Add playbook "${newBook.title}" via Admin Studio`).then(res => {
+        if (res.success) {
+          showToast(`Committed "${newBook.title}" to GitHub!`);
+        }
+      });
+    }
   };
 
   // Delete book
@@ -332,6 +356,14 @@ export default function EbookAdminView({
           {/* Action Header Buttons */}
           <div className="flex flex-wrap items-center gap-2.5">
             <button
+              onClick={() => setIsGitHubModalOpen(true)}
+              className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors cursor-pointer shadow-sm"
+            >
+              <GitCommit className="w-3.5 h-3.5" />
+              Commit to GitHub
+            </button>
+
+            <button
               onClick={onNavigateToShop}
               className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer"
             >
@@ -452,6 +484,15 @@ export default function EbookAdminView({
 
           {/* Catalog Utilities: Backup & Reset */}
           <div className="hidden sm:flex items-center gap-2">
+            <button
+              onClick={() => setIsGitHubModalOpen(true)}
+              title="Commit changes to GitHub repository"
+              className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors"
+            >
+              <GitCommit className="w-3.5 h-3.5" />
+              Commit to GitHub
+            </button>
+
             <button
               onClick={handleExportJSON}
               title="Download backup JSON"
@@ -1379,6 +1420,14 @@ export default function EbookAdminView({
           </div>
         </div>
       )}
+
+      {/* GITHUB COMMIT & DEPLOY MODAL */}
+      <GitHubCommitModal
+        isOpen={isGitHubModalOpen}
+        onClose={() => setIsGitHubModalOpen(false)}
+        ebooks={ebooks}
+        onCommitSuccess={() => showToast('Committed & deployed to GitHub!')}
+      />
 
     </div>
   );
