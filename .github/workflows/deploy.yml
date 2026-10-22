@@ -39,6 +39,13 @@ jobs:
         run: npm install
       - name: Build
         run: npm run build
+      - name: Ensure CNAME exists in dist
+        run: |
+          if [ -f "public/CNAME" ] && [ ! -f "dist/CNAME" ]; then
+            cp public/CNAME dist/CNAME
+          elif [ -f "CNAME" ] && [ ! -f "dist/CNAME" ]; then
+            cp CNAME dist/CNAME
+          fi
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact
