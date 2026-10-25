@@ -1,12 +1,17 @@
-import { useState, useMemo, type FormEvent, type ChangeEvent } from 'react';
+import { useState, useEffect, useMemo, type FormEvent, type ChangeEvent } from 'react';
 import { EbookItem, EbookCategory, EbookStatus, CoverDesignConfig } from '../types';
 import BookCoverVisual from './BookCoverVisual';
 import ImageUploader from './ImageUploader';
 import {
   saveStoredEbooks,
+  updateEbookItem,
   addEbookItem,
   deleteEbookItem,
-  resetEbooksToDefault
+  resetEbooksToDefault,
+  getMongoDBStatus,
+  syncWithMongoDB,
+  syncCatalogToMongoDB,
+  type MongoStatusResponse
 } from '../utils/ebookStore';
 import {
   Package,
@@ -27,7 +32,11 @@ import {
   ArrowLeft,
   Sparkles,
   Edit3,
-  GitCommit
+  GitCommit,
+  Database,
+  CheckCircle2,
+  AlertCircle,
+  ExternalLink
 } from 'lucide-react';
 import GitHubCommitModal from './GitHubCommitModal';
 import { getGitHubConfig, commitCatalogToGitHub } from '../utils/githubSync';
@@ -89,6 +98,58 @@ export default function EbookAdminView({
   const [newBookCoverImage, setNewBookCoverImage] = useState('');
   const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false);
 
+  // MongoDB Atlas status & state
+  const [mongoStatus, setMongoStatus] = useState<MongoStatusResponse | null>(null);
+  const [isCheckingMongo, setIsCheckingMongo] = useState(false);
+  const [isSyncingMongo, setIsSyncingMongo] = useState(false);
+  const [showMongoDetails, setShowMongoDetails] = useState(false);
+
+  const checkMongo = async (force = false) => {
+    setIsCheckingMongo(true);
+    try {
+      const status = await getMongoDBStatus(force);
+      setMongoStatus(status);
+    } catch {
+      setMongoStatus({ connected: false, error: 'Could not reach server endpoint' });
+    } finally {
+      setIsCheckingMongo(false);
+    }
+  };
+
+  useEffect(() => {
+    checkMongo();
+  }, []);
+
+  const handlePullFromMongo = async () => {
+    setIsSyncingMongo(true);
+    try {
+      const books = await syncWithMongoDB();
+      onUpdateEbooks(books);
+      showToast('Catalog refreshed from MongoDB Atlas');
+    } catch (e: any) {
+      showToast(`Sync error: ${e.message}`);
+    } finally {
+      setIsSyncingMongo(false);
+    }
+  };
+
+  const handlePushToMongo = async () => {
+    setIsSyncingMongo(true);
+    try {
+      const res = await syncCatalogToMongoDB(ebooks);
+      if (res.success) {
+        showToast('All playbooks saved to MongoDB Atlas!');
+      } else {
+        showToast(`MongoDB warning: ${res.message}`);
+      }
+      checkMongo();
+    } catch (e: any) {
+      showToast(`Error saving to MongoDB: ${e.message}`);
+    } finally {
+      setIsSyncingMongo(false);
+    }
+  };
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
@@ -106,16 +167,10 @@ export default function EbookAdminView({
   const lowStockCount = ebooks.filter(b => !b.isUnlimited && b.inventoryCount > 0 && b.inventoryCount <= 25).length;
 
   // Single book field updater
-  const handleUpdateBook = (id: string, updates: Partial<EbookItem>) => {
-    const updatedList = ebooks.map(book => {
-      if (book.id === id) {
-        return { ...book, ...updates };
-      }
-      return book;
-    });
+  const handleUpdateBook = async (id: string, updates: Partial<EbookItem>) => {
+    const updatedList = await updateEbookItem(id, updates);
     onUpdateEbooks(updatedList);
-    saveStoredEbooks(updatedList);
-    showToast('Catalog updated successfully');
+    showToast('Saved to MongoDB & catalog');
 
     // If auto-commit is enabled in GitHub settings, sync directly to GitHub
     const ghConfig = getGitHubConfig();
@@ -146,7 +201,7 @@ export default function EbookAdminView({
   };
 
   // Add new book
-  const handleCreateBook = (e: FormEvent) => {
+  const handleCreateBook = async (e: FormEvent) => {
     e.preventDefault();
     if (!newBookTitle.trim()) return;
 
@@ -197,12 +252,12 @@ export default function EbookAdminView({
       salesCount: 0
     };
 
-    const updated = addEbookItem(newBook);
+    const updated = await addEbookItem(newBook);
     onUpdateEbooks(updated);
     setSelectedBookId(newBook.id);
     setNewBookCoverImage('');
     setIsAddModalOpen(false);
-    showToast(`Created new playbook: ${newBook.title}`);
+    showToast(`Created & saved playbook to MongoDB: ${newBook.title}`);
 
     // If auto-commit is enabled in GitHub settings, sync directly to GitHub
     const ghConfig = getGitHubConfig();
@@ -216,24 +271,24 @@ export default function EbookAdminView({
   };
 
   // Delete book
-  const handleDeleteBook = (id: string, title: string) => {
+  const handleDeleteBook = async (id: string, title: string) => {
     if (confirm(`Are you sure you want to delete "${title}"?`)) {
-      const updated = deleteEbookItem(id);
+      const updated = await deleteEbookItem(id);
       onUpdateEbooks(updated);
       if (selectedBookId === id && updated.length > 0) {
         setSelectedBookId(updated[0].id);
       }
-      showToast('Book deleted');
+      showToast('Book deleted from MongoDB and catalog');
     }
   };
 
   // Reset to default
-  const handleResetCatalog = () => {
+  const handleResetCatalog = async () => {
     if (confirm('Reset entire catalog to original factory presets? Any custom edits will be reverted.')) {
-      const defaults = resetEbooksToDefault();
+      const defaults = await resetEbooksToDefault();
       onUpdateEbooks(defaults);
       setSelectedBookId(defaults[0]?.id || '');
-      showToast('Reset catalog to defaults');
+      showToast('Reset catalog to defaults in MongoDB');
     }
   };
 
@@ -254,14 +309,15 @@ export default function EbookAdminView({
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const parsed = JSON.parse(event.target?.result as string);
         if (Array.isArray(parsed) && parsed.length > 0) {
           saveStoredEbooks(parsed);
           onUpdateEbooks(parsed);
+          await syncCatalogToMongoDB(parsed);
           setSelectedBookId(parsed[0].id);
-          showToast('Imported catalog successfully');
+          showToast('Imported catalog and saved to MongoDB Atlas');
         } else {
           alert('Invalid catalog JSON format.');
         }
@@ -382,8 +438,119 @@ export default function EbookAdminView({
         </div>
       </section>
 
+      {/* MongoDB Atlas Real-Time Database Connection Banner */}
+      <section className="px-8 max-w-7xl mx-auto pt-6">
+        <div className={`rounded-xl border p-5 shadow-xs transition-colors ${
+          mongoStatus?.connected 
+            ? 'bg-emerald-50/60 border-emerald-200' 
+            : mongoStatus?.isIpWhitelistError 
+            ? 'bg-amber-50/80 border-amber-300' 
+            : 'bg-slate-50 border-slate-200'
+        }`}>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div className={`p-2.5 rounded-lg shrink-0 ${
+                mongoStatus?.connected 
+                  ? 'bg-emerald-600 text-white' 
+                  : mongoStatus?.isIpWhitelistError 
+                  ? 'bg-amber-600 text-white' 
+                  : 'bg-slate-700 text-white'
+              }`}>
+                <Database className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="font-display font-bold text-sm text-slate-900">
+                    MongoDB Atlas Playbook Database
+                  </h3>
+                  {mongoStatus?.connected ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      Live Cluster Connected
+                    </span>
+                  ) : mongoStatus?.isIpWhitelistError ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+                      <AlertCircle className="w-3 h-3 text-amber-600" />
+                      Network Access (IP Whitelist) Required
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">
+                      <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                      Local Fallback Active
+                    </span>
+                  )}
+                </div>
+
+                <p className="text-xs text-slate-600 mt-1">
+                  <span className="font-mono text-slate-700 font-medium">Cluster: jnjtestcluster.695tiet.mongodb.net</span>
+                  <span className="mx-1.5 text-slate-400">·</span>
+                  <span className="font-mono text-slate-700">DB: jnj_innovations</span>
+                  <span className="mx-1.5 text-slate-400">·</span>
+                  <span className="font-mono text-slate-700">Collection: playbooks</span>
+                </p>
+
+                {mongoStatus?.connected ? (
+                  <p className="text-xs text-emerald-700 font-medium mt-1">
+                    Playbook inventory, pricing adjustments, custom designs, and new titles automatically sync to your MongoDB Atlas collection.
+                  </p>
+                ) : mongoStatus?.isIpWhitelistError ? (
+                  <div className="mt-2 text-xs text-amber-900 bg-amber-100/70 border border-amber-300/60 rounded-lg p-3">
+                    <p className="font-semibold flex items-center gap-1.5 text-amber-950">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                      MongoDB Atlas TLS alert 80: IP whitelist configuration needed
+                    </p>
+                    <p className="mt-1 text-amber-800">
+                      Your database credentials (<code className="font-mono font-semibold">jnjinnovations1_db_user</code>) are valid, but Atlas firewall blocks incoming traffic from new IPs by default.
+                    </p>
+                    <div className="mt-2 text-[11px] font-medium text-amber-900 bg-white/70 p-2 rounded border border-amber-200">
+                      <strong>To enable:</strong> Log in to MongoDB Atlas &rarr; <strong>Security</strong> &rarr; <strong>Network Access</strong> &rarr; Click <strong>+ Add IP Address</strong> &rarr; Select <strong>Allow Access From Anywhere (0.0.0.0/0)</strong> &rarr; Confirm. Once saved, click &quot;Test Connection&quot; below.
+                    </div>
+                  </div>
+                ) : mongoStatus?.error ? (
+                  <p className="text-xs text-red-600 mt-1">
+                    Status info: {mongoStatus.error}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 self-start md:self-center shrink-0">
+              <button
+                type="button"
+                onClick={() => checkMongo(true)}
+                disabled={isCheckingMongo}
+                className="flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-60"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isCheckingMongo ? 'animate-spin' : ''}`} />
+                {isCheckingMongo ? 'Checking...' : 'Test Connection'}
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePullFromMongo}
+                disabled={isSyncingMongo}
+                className="flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-60"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isSyncingMongo ? 'animate-spin' : ''}`} />
+                {isSyncingMongo ? 'Syncing...' : 'Sync from Atlas'}
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePushToMongo}
+                disabled={isSyncingMongo}
+                className="flex items-center gap-1.5 bg-[#0A1628] hover:bg-slate-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-60"
+              >
+                <Upload className="w-3.5 h-3.5 text-sky-400" />
+                Push Catalog to Atlas
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* KPI Overview Cards */}
-      <section className="px-8 max-w-7xl mx-auto -mt-3 pt-6">
+      <section className="px-8 max-w-7xl mx-auto pt-6">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
             <span className="font-mono text-[10px] uppercase font-bold text-slate-400 tracking-wider">

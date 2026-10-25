@@ -27,40 +27,129 @@ export function saveStoredEbooks(books: EbookItem[]): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
-    // Dispatch a custom storage event so other components or tabs update immediately
     window.dispatchEvent(new Event('jnj-ebooks-updated'));
   } catch (err) {
     console.error('Failed to save ebooks to localStorage:', err);
   }
 }
 
-export function updateEbookItem(id: string, updates: Partial<EbookItem>): EbookItem[] {
+export interface MongoStatusResponse {
+  connected: boolean;
+  cluster?: string;
+  database?: string;
+  collection?: string;
+  error?: string;
+  isIpWhitelistError?: boolean;
+  ipWhitelistGuide?: string;
+}
+
+export async function getMongoDBStatus(force = false): Promise<MongoStatusResponse> {
+  try {
+    const res = await fetch(`/api/mongodb/status${force ? '?force=1' : ''}`);
+    if (res.ok) {
+      return await res.json();
+    }
+    return { connected: false, error: `HTTP ${res.status}: Failed to reach API server` };
+  } catch (err: any) {
+    return { connected: false, error: err.message };
+  }
+}
+
+export async function syncWithMongoDB(): Promise<EbookItem[]> {
+  try {
+    const res = await fetch('/api/playbooks');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && Array.isArray(data.books) && data.books.length > 0) {
+        saveStoredEbooks(data.books);
+        return data.books;
+      }
+    }
+  } catch (err) {
+    console.warn('[Store] MongoDB fetch fallback to local storage:', err);
+  }
+  return getStoredEbooks();
+}
+
+export async function syncCatalogToMongoDB(books: EbookItem[]): Promise<{ success: boolean; message: string }> {
+  try {
+    const res = await fetch('/api/playbooks', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(books)
+    });
+    const data = await res.json();
+    return { success: res.ok && data.success, message: data.message || data.error || 'Synced' };
+  } catch (err: any) {
+    return { success: false, message: err.message };
+  }
+}
+
+export async function updateEbookItem(id: string, updates: Partial<EbookItem>): Promise<EbookItem[]> {
   const books = getStoredEbooks();
   const index = books.findIndex(b => b.id === id);
   if (index !== -1) {
     books[index] = { ...books[index], ...updates };
     saveStoredEbooks(books);
+
+    try {
+      fetch(`/api/playbooks/${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      }).catch(e => console.warn('[MongoDB] Background update warning:', e));
+    } catch (e) {
+      console.warn('[MongoDB] Could not sync update to server:', e);
+    }
   }
   return books;
 }
 
-export function addEbookItem(book: EbookItem): EbookItem[] {
+export async function addEbookItem(book: EbookItem): Promise<EbookItem[]> {
   const books = getStoredEbooks();
   books.unshift(book);
   saveStoredEbooks(books);
+
+  try {
+    fetch('/api/playbooks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(book)
+    }).catch(e => console.warn('[MongoDB] Background add warning:', e));
+  } catch (e) {
+    console.warn('[MongoDB] Could not sync new book to server:', e);
+  }
+
   return books;
 }
 
-export function deleteEbookItem(id: string): EbookItem[] {
+export async function deleteEbookItem(id: string): Promise<EbookItem[]> {
   const books = getStoredEbooks().filter(b => b.id !== id);
   saveStoredEbooks(books);
+
+  try {
+    fetch(`/api/playbooks/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    }).catch(e => console.warn('[MongoDB] Background delete warning:', e));
+  } catch (e) {
+    console.warn('[MongoDB] Could not sync delete to server:', e);
+  }
+
   return books;
 }
 
-export function resetEbooksToDefault(): EbookItem[] {
+export async function resetEbooksToDefault(): Promise<EbookItem[]> {
   if (typeof window !== 'undefined') {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_EBOOKS));
     window.dispatchEvent(new Event('jnj-ebooks-updated'));
+
+    try {
+      fetch('/api/playbooks/reset', { method: 'POST' }).catch(e =>
+        console.warn('[MongoDB] Background reset warning:', e)
+      );
+    } catch (e) {
+      console.warn('[MongoDB] Could not reset server collection:', e);
+    }
   }
   return DEFAULT_EBOOKS;
 }
@@ -82,7 +171,6 @@ export function recordCompletedOrder(order: OrderConfirmation): void {
     orders.unshift(order);
     localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
 
-    // Decrement inventory for items with finite stock
     const books = getStoredEbooks();
     order.items.forEach(item => {
       const bookIndex = books.findIndex(b => b.id === item.bookId);
@@ -97,6 +185,11 @@ export function recordCompletedOrder(order: OrderConfirmation): void {
             book.status = 'low_stock';
           }
         }
+        updateEbookItem(book.id, {
+          inventoryCount: book.inventoryCount,
+          salesCount: book.salesCount,
+          status: book.status
+        });
       }
     });
     saveStoredEbooks(books);

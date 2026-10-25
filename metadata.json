@@ -1,8 +1,6 @@
 {
-  "name": "Remix JNJ Innovations",
-  "description": "Michigan\u0027s SMB Technology and Management Consulting Partner - We diagnose, automate, and intelligize your operations.",
-  "requestFramePermissions": [],
-  "majorCapabilities": [
-    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
-  ]
+  "name": "JNJ Innovations Publication & Store Studio",
+  "description": "Executive bookstore and catalog management system with real-time MongoDB Atlas integration, dynamic pricing, and publication studio.",
+  "permissions": [],
+  "capabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

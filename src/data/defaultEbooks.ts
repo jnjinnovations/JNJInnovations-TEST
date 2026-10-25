@@ -2,334 +2,298 @@ import { EbookItem } from '../types';
 
 export const DEFAULT_EBOOKS: EbookItem[] = [
   {
-    id: 'michigan-smb-automation-blueprint',
-    sku: 'JNJ-BK-001',
-    title: 'Michigan SMB Automation Blueprint',
-    subtitle: 'A Business Technology Playbook for Pragmatic Operations',
-    author: 'James L. Donaldson',
-    price: 49.00,
-    salePrice: 39.00,
+    id: "michigan-smb-automation-blueprint",
+    sku: "JNJ-BK-001",
+    title: "Michigan SMB Automation Blueprint",
+    subtitle: "A Business Technology Playbook for Pragmatic Operations",
+    author: "JNJ Innovations Advisory Practice",
+    price: 39,
+    originalPrice: 59,
     isOnSale: true,
-    category: 'Automation',
-    inventoryCount: 35,
+    category: "Automation",
+    inventoryCount: 45,
     isUnlimited: false,
-    status: 'active',
-    format: ['PDF', 'ePub', 'Notion Workspace', 'Python Scripts'],
-    pages: 198,
-    publishedYear: '2026',
-    edition: '2026 Field Edition',
-    badgeText: 'Bestseller',
-    description: 'The definitive blueprint for midwest small-and-medium businesses looking to eliminate manual paperwork, synchronize CRMs, and automate repetitive fulfillment workflows.',
-    longDescription: 'Written specifically for Michigan operations managers, founders, and IT leads. This field manual skips theoretical Silicon Valley hype and lays out pragmatic, battle-tested automation architectures using low-code engines, webhook synchronizers, and custom Python daemons.',
+    status: "active",
+    format: ["PDF (Print Quality)", "ePub (Universal Reader)", "Excel ROI Model"],
+    pages: 184,
+    publishedYear: "2026",
+    edition: "First Executive Edition",
+    badgeText: "Bestseller",
+    description: "Battle-tested workflows, calculation spreadsheets, and implementation roadmaps for Michigan business owners.",
+    longDescription: "Designed specifically for Midwestern manufacturing, logistics, and professional service operators.",
     tableOfContents: [
-      { chapter: '01', title: 'The Anatomy of Waste in Regional SMBs', pages: '1-28' },
-      { chapter: '02', title: 'Inventory, Invoicing & ERP Bridge Architectures', pages: '29-64' },
-      { chapter: '03', title: 'Zero-Maintenance Webhook Pipelines with Python & Make', pages: '65-110' },
-      { chapter: '04', title: 'Automating Customer Lifecycle & Dispatch Notices', pages: '111-152' },
-      { chapter: '05', title: 'Calculating Net Time Saved & ROI Verification', pages: '153-198' }
+      { chapter: "01", title: "Diagnostic Assessment: Process Waste Audit", pages: "1-28" },
+      { chapter: "02", title: "Low-Code vs Custom Automation Matrix", pages: "29-74" },
+      { chapter: "03", title: "Vendor Integration & Legacy ERP Bridges", pages: "75-120" },
+      { chapter: "04", title: "Financial Return Modeling & Verification", pages: "121-184" }
     ],
     sampleContent: [
       {
-        chapterTitle: 'Chapter 1: The Anatomy of Waste in Regional SMBs',
+        chapterTitle: "Chapter 1: The Operator Dilemma",
         pageNumber: 12,
-        text: 'Every morning across Michigan’s precision manufacturing and distribution corridors, staff spend between 85 and 140 minutes transcribing purchase orders from emailed PDF attachments into on-premise accounting software. This single failure point introduces a 3.4% error rate and creates an artificial ceiling on quarterly capacity. In this chapter, we map the four core integration choke-points that rob SMBs of margin.'
-      },
-      {
-        chapterTitle: 'Chapter 2: Inventory, Invoicing & ERP Bridge Architectures',
-        pageNumber: 42,
-        text: 'Instead of enduring an expensive 18-month ERP overhaul that drains balance sheet liquidity, a modern SMB can deploy an event-driven middleware bridge in under three weeks. By polling REST endpoints or monitoring incoming SFTP drops, inventory updates synchronize seamlessly with zero human data-entry.'
-      },
-      {
-        chapterTitle: 'Chapter 3: Zero-Maintenance Webhook Pipelines',
-        pageNumber: 88,
-        text: 'Resilience is not about preventing errors; it is about graceful recovery. We structure every webhook listener with idempotent event deduping and dead-letter queueing so network blips never drop client transaction records.'
+        text: "The most expensive automation is the one built on broken manual processes. Before writing a line of code or subscribing to integration SaaS, map every handoff."
       }
     ],
     includedAssets: [
-      'Production Python Webhook Bridge Repository (GitHub Access)',
-      '14 Pre-Built Zapier / Make Blueprint JSONs',
-      'SMB Time-Audit Spreadsheet with Automated ROI Calculator',
-      'Printable Executive Summary PDF'
+      "Excel Automation ROI Calculator (.xlsx)",
+      "Vendor Evaluation Matrix (.pdf)",
+      "Standard Operating Procedure Template (.docx)"
     ],
-    coverImage: '/src/assets/images/smb_automation_blueprint_1792526861207.jpg',
     coverDesign: {
-      theme: 'navy',
-      bgColor: '#0A1628',
-      accentColor: '#38bdf8',
-      textColor: '#ffffff',
-      pattern: 'blueprint-grid',
-      showCoverImage: true,
-      spineText: 'MICHIGAN SMB AUTOMATION BLUEPRINT — DONALDSON'
+      theme: "navy",
+      bgColor: "#0A1628",
+      accentColor: "#38bdf8",
+      textColor: "#ffffff",
+      pattern: "blueprint-grid",
+      showCoverImage: true
     },
-    rating: 4.95,
-    reviewCount: 48,
-    salesCount: 312
+    rating: 4.9,
+    reviewCount: 38,
+    salesCount: 142
   },
   {
-    id: 'operational-ai-in-enterprise',
-    sku: 'JNJ-BK-002',
-    title: 'Operational AI in Enterprise',
-    subtitle: 'A Strategic Framework for Business Innovation & Agentic Workflows',
-    author: 'Maximilian C. Vance',
-    price: 65.00,
-    salePrice: 49.00,
-    isOnSale: true,
-    category: 'AI & Analytics',
-    inventoryCount: 80,
-    isUnlimited: false,
-    status: 'active',
-    format: ['PDF', 'ePub', 'Executive Audio Brief'],
-    pages: 242,
-    publishedYear: '2026',
-    edition: 'Second Revised Edition',
-    badgeText: 'Executive Choice',
-    description: 'A no-nonsense roadmap for business leaders to deploy generative AI agents, proprietary vector retrieval, and automated document synthesis without corporate liability.',
-    longDescription: 'Most corporate AI initiatives stall out at internal chatbots. This manual explains how to build real autonomous task pipelines: automated RFP drafting, predictive supplier pricing analysis, and customer service escalation filters with strict privacy isolation.',
-    tableOfContents: [
-      { chapter: '01', title: 'Beyond Chat: Agentic Architectures in Business', pages: '1-36' },
-      { chapter: '02', title: 'Data Privacy, Local Embeddings & Model Selection', pages: '37-82' },
-      { chapter: '03', title: 'Automating Commercial Bids & RFP Ingestion', pages: '83-134' },
-      { chapter: '04', title: 'Human-in-the-Loop Validation & Guardrails', pages: '135-188' },
-      { chapter: '05', title: 'Measuring Real Labor Multipliers & Unit Economics', pages: '189-242' }
-    ],
-    sampleContent: [
-      {
-        chapterTitle: 'Chapter 1: Beyond Chat: Agentic Architectures',
-        pageNumber: 15,
-        text: 'The fundamental trap for organizations in 2025 and 2026 was treating AI as an oracle rather than a deterministic pipeline operator. When an LLM is placed in a loop with tools, schemas, and verification steps, hallucination rates drop below 0.1%, turning fragile experiments into resilient daily drivers.'
-      },
-      {
-        chapterTitle: 'Chapter 3: RFP Ingestion & Response Engines',
-        pageNumber: 94,
-        text: 'Our multi-stage document parser slices incoming 80-page government solicitations into compliance matrices in 90 seconds, cross-referencing your historic win-rate data to estimate proposal feasibility before a single engineering hour is committed.'
-      }
-    ],
-    includedAssets: [
-      'Enterprise LLM Procurement Evaluation Checklist',
-      'Vector Embedding Architecture Diagrams (Figma & Draw.io)',
-      'Human-in-the-Loop Guardrail Schema (TypeScript / Pydantic)',
-      'Executive Boardroom Presentation Slide Deck'
-    ],
-    coverImage: '/src/assets/images/enterprise_ai_playbook_1792526861798.jpg',
-    coverDesign: {
-      theme: 'navy',
-      bgColor: '#0c1524',
-      accentColor: '#93c5fd',
-      textColor: '#f8fafc',
-      pattern: 'neural-network',
-      showCoverImage: true,
-      spineText: 'OPERATIONAL AI IN ENTERPRISE — VANCE'
-    },
-    rating: 4.88,
-    reviewCount: 36,
-    salesCount: 244
-  },
-  {
-    id: 'cloud-migration-infrastructure-architecture',
-    sku: 'JNJ-BK-003',
-    title: 'Cloud Migration & Infrastructure Architecture',
-    subtitle: 'Zero-Downtime Transition Framework for Legacy Systems',
-    author: 'Samuel Oakley & Luna Chen',
-    price: 45.00,
+    id: "modern-cloud-architecture-playbook",
+    sku: "JNJ-BK-002",
+    title: "Modern Cloud Architecture & Migration Playbook",
+    subtitle: "Cost-Optimized Hybrid Infrastructure for Mid-Market Enterprises",
+    author: "JNJ Innovations Systems Architecture Group",
+    price: 49,
+    originalPrice: 69,
     isOnSale: false,
-    category: 'Cloud Infrastructure',
+    category: "Cloud & Infrastructure",
     inventoryCount: 9999,
     isUnlimited: true,
-    status: 'active',
-    format: ['PDF', 'ePub', 'Terraform Modules', 'Visio Stencils'],
-    pages: 216,
-    publishedYear: '2026',
-    edition: 'Architect Edition',
-    badgeText: 'Technical Deep-Dive',
-    description: 'Practical playbook for decommissioning legacy physical server racks and executing clean, cost-efficient migrations into modern multi-cloud environments.',
-    longDescription: 'Covers live database streaming replication, VPC peering, Kubernetes vs serverless container trade-offs, and how to prevent surprise cloud bills from crippling small enterprise margins.',
+    status: "active",
+    format: ["PDF (Vector)", "ePub", "Terraform Snippet Library"],
+    pages: 236,
+    publishedYear: "2026",
+    edition: "Cloud Architecture Series",
+    badgeText: "Enterprise Choice",
+    description: "Step-by-step guidance on zero-downtime database and workload migrations with cost containment safeguards.",
+    longDescription: "Avoid runaway cloud bills and multi-year migration stalls with our battle-proven 5-phase migration playbook.",
     tableOfContents: [
-      { chapter: '01', title: 'Auditing On-Premise Monoliths & Deprecations', pages: '1-32' },
-      { chapter: '02', title: 'Data Migration Strategies with Zero Cutover Loss', pages: '33-78' },
-      { chapter: '03', title: 'Right-Sizing Compute & Reserved Instance Economics', pages: '79-122' },
-      { chapter: '04', title: 'Infrastructure as Code with Terraform & Pulumi', pages: '123-174' },
-      { chapter: '05', title: 'Post-Migration Observability, SLOs & Alerting', pages: '175-216' }
+      { chapter: "01", title: "Pre-Migration Infrastructure Audit", pages: "1-42" },
+      { chapter: "02", title: "Multi-Cloud vs Single-Provider Realities", pages: "43-98" },
+      { chapter: "03", title: "Database Cutover and Data Consistency", pages: "99-164" },
+      { chapter: "04", title: "FinOps: Continuous Cost Guardrails", pages: "165-236" }
     ],
     sampleContent: [
       {
-        chapterTitle: 'Chapter 2: Data Migration Strategies with Zero Cutover Loss',
-        pageNumber: 48,
-        text: 'The single most common mistake during database migrations is the hard weekend maintenance window. In this section, we show how logical replication with CDC (Change Data Capture) allows the target cloud replica to remain in lockstep with the on-premise master, enabling a failover switch in under four seconds.'
-      }
-    ],
-    includedAssets: [
-      'Turnkey Terraform Production Starter Stack for AWS & GCP',
-      'Cloud TCO & Monthly Cost Calculator (Excel with formula guides)',
-      'Incident Drill Tabletop Scenarios PDF'
-    ],
-    coverImage: '/src/assets/images/cloud_infrastructure_guide_1792526862062.jpg',
-    coverDesign: {
-      theme: 'steel',
-      bgColor: '#111827',
-      accentColor: '#38bdf8',
-      textColor: '#f9fafb',
-      pattern: 'geometric-cubes',
-      showCoverImage: true,
-      spineText: 'CLOUD MIGRATION ARCHITECTURE — OAKLEY & CHEN'
-    },
-    rating: 4.92,
-    reviewCount: 29,
-    salesCount: 187
-  },
-  {
-    id: 'cybersecurity-compliance-governance',
-    sku: 'JNJ-BK-004',
-    title: 'Cybersecurity & Compliance Governance',
-    subtitle: 'Strategic Frameworks, Risk Management & Regulatory Adherence',
-    author: 'Michael A. Chen, JD, CISSP',
-    price: 55.00,
-    isOnSale: false,
-    category: 'Cybersecurity',
-    inventoryCount: 22,
-    isUnlimited: false,
-    status: 'low_stock',
-    format: ['PDF', 'ePub', 'Audit Questionnaires', 'Policy Templates'],
-    pages: 280,
-    publishedYear: '2026',
-    edition: 'Compliance Certified',
-    badgeText: 'Crucial for SMBs',
-    description: 'An executive and IT handbook for achieving SOC 2, HIPAA, and FTC Safeguards compliance without enterprise consulting price tags.',
-    longDescription: 'Packed with copy-paste security policies, incident response runbooks, vendor risk assessment matrices, and employee phishing test protocols tailored for regional businesses under 250 employees.',
-    tableOfContents: [
-      { chapter: '01', title: 'The Modern Threat Landscape for Non-Tech Firms', pages: '1-40' },
-      { chapter: '02', title: 'Identity & Access Management: Passwords to Passkeys', pages: '41-92' },
-      { chapter: '03', title: 'SOC 2 Type II Readiness in Under 90 Days', pages: '93-154' },
-      { chapter: '04', title: 'Vendor Due Diligence & Supply Chain Liability', pages: '155-212' },
-      { chapter: '05', title: 'The Complete Incident Response Protocol', pages: '213-280' }
-    ],
-    sampleContent: [
-      {
-        chapterTitle: 'Chapter 3: SOC 2 Type II Readiness',
+        chapterTitle: "Chapter 3: Zero-Loss Database Cutovers",
         pageNumber: 104,
-        text: 'Compliance auditors do not expect military-grade air-gapped chambers; they inspect repeatable, documented evidence. We outline the 24 foundational automated controls that satisfy 85% of Trust Services Criteria without purchasing redundant compliance software.'
+        text: "Always maintain dual-write replication for at least 72 hours before severing the legacy database connections."
       }
     ],
     includedAssets: [
-      'Complete Employee Security Handbook (Fully Editable Word Doc)',
-      'Vendor Risk Assessment Spreadsheet (Auto-scoring)',
-      'Incident Response Escalation Flowcharts'
+      "Terraform VPC Baseline Blueprint (.tf)",
+      "Monthly Cloud Budgeting Sheet (.xlsx)"
     ],
-    coverImage: '/src/assets/images/cybersecurity_compliance_handbook_1792526862382.jpg',
     coverDesign: {
-      theme: 'navy',
-      bgColor: '#09152a',
-      accentColor: '#94a3b8',
-      textColor: '#ffffff',
-      pattern: 'shield',
-      showCoverImage: true,
-      spineText: 'CYBERSECURITY & COMPLIANCE — CHEN'
+      theme: "charcoal",
+      bgColor: "#18181b",
+      accentColor: "#fbbf24",
+      textColor: "#f4f4f5",
+      pattern: "geometric-cubes",
+      showCoverImage: true
     },
-    rating: 4.97,
-    reviewCount: 42,
-    salesCount: 295
+    rating: 4.8,
+    reviewCount: 29,
+    salesCount: 88
   },
   {
-    id: 'lean-systems-erp-implementation',
-    sku: 'JNJ-BK-005',
-    title: 'Lean Systems & ERP Implementation',
-    subtitle: 'Modernizing Mid-Market Manufacturing & Supply Chains',
-    author: 'Elena Rostova & JNJ Industrial Team',
-    price: 39.00,
-    salePrice: 29.00,
-    isOnSale: true,
-    category: 'Operations',
-    inventoryCount: 50,
-    isUnlimited: false,
-    status: 'active',
-    format: ['PDF', 'ePub', 'ERP Evaluation Matrix'],
-    pages: 176,
-    publishedYear: '2026',
-    edition: 'First Edition',
-    badgeText: 'New Release',
-    description: 'How to select, customize, and roll out ERP systems without halting factory floor production or alienating veteran staff.',
-    longDescription: 'Draws on 40+ regional manufacturing turnarounds in Michigan and the Midwest. Details shop floor data collection, barcode tracking, BOM accuracy, and the psychological side of digital transformation.',
-    tableOfContents: [
-      { chapter: '01', title: 'Why 70% of Mid-Market ERP Rollouts Stall', pages: '1-30' },
-      { chapter: '02', title: 'Vendor Scoring: NetSuite, Acumatica, Odoo & Infor', pages: '31-72' },
-      { chapter: '03', title: 'Shop-Floor Data Capture & Clean Master Records', pages: '73-118' },
-      { chapter: '04', title: 'Change Management for Floor Supervisors & Techs', pages: '119-150' },
-      { chapter: '05', title: 'Continuous Improvement After Go-Live', pages: '151-176' }
-    ],
-    sampleContent: [
-      {
-        chapterTitle: 'Chapter 1: Why 70% of ERP Rollouts Stall',
-        pageNumber: 14,
-        text: 'The failure is almost never software code; it is unclean data migrated into pristine fields. If your existing SKU hierarchy contains 3,000 duplicate parts, no cloud subscription will miraculously fix shipping accuracy. Step zero is radical data hygiene.'
-      }
-    ],
-    includedAssets: [
-      'Comprehensive ERP Vendor Selection Matrix (Weighted Scoring)',
-      'Data Cleansing & Master Record Migration Checklist',
-      'Change Management Communication Templates'
-    ],
-    coverImage: '',
-    coverDesign: {
-      theme: 'emerald',
-      bgColor: '#064e3b',
-      accentColor: '#34d399',
-      textColor: '#ecfdf5',
-      pattern: 'circuit-matrix',
-      showCoverImage: false,
-      spineText: 'LEAN SYSTEMS & ERP IMPLEMENTATION — ROSTOVA'
-    },
-    rating: 4.85,
-    reviewCount: 19,
-    salesCount: 114
-  },
-  {
-    id: '90-day-modernization-playbook',
-    sku: 'JNJ-BK-006',
-    title: 'The 90-Day Tech Modernization Playbook',
-    subtitle: 'Rapid Tactical Upgrades for Michigan Small Business',
-    author: 'JNJ Innovations Advisory Practice',
-    price: 32.00,
+    id: "cybersecurity-defense-field-manual",
+    sku: "JNJ-BK-003",
+    title: "Cybersecurity Defense & Incident Response Field Manual",
+    subtitle: "Ransomware Prevention, Compliance, and Business Continuity",
+    author: "JNJ Innovations Cyber Advisory",
+    price: 45,
+    originalPrice: 55,
     isOnSale: false,
-    category: 'Strategy',
-    inventoryCount: 65,
+    category: "Cybersecurity",
+    inventoryCount: 18,
     isUnlimited: false,
-    status: 'active',
-    format: ['PDF', 'ePub', 'Weekly Sprints Checklist'],
-    pages: 154,
-    publishedYear: '2026',
-    edition: 'Advisory Edition',
-    badgeText: 'Fast Track',
-    description: 'A structured 12-week sprint program to audit, clean up, and modernize your company’s hardware, software licenses, and customer interfaces.',
-    longDescription: 'Designed for owner-operators who need quick operational wins in one fiscal quarter. Week-by-week actions that immediately trim software overhead, secure staff accounts, and streamline customer communication.',
+    status: "low_stock",
+    format: ["PDF", "ePub", "Incident Response Checklists"],
+    pages: 198,
+    publishedYear: "2026",
+    edition: "Security Series v3",
+    badgeText: "Critical Guide",
+    description: "Practical security playbooks for organizations without eight-figure cybersecurity budgets.",
+    longDescription: "Concrete strategies covering identity governance, credential hardening, endpoint detection, and response simulation.",
     tableOfContents: [
-      { chapter: '01', title: 'Weeks 1-3: Hardware & SaaS Overhead Audit', pages: '1-34' },
-      { chapter: '02', title: 'Weeks 4-6: Email, Domain & Account Hardening', pages: '35-68' },
-      { chapter: '03', title: 'Weeks 7-9: Customer Communication & Booking Flows', pages: '69-106' },
-      { chapter: '04', title: 'Weeks 10-12: Unified Metric Dashboard & Handover', pages: '107-154' }
+      { chapter: "01", title: "Threat Surface Minimization", pages: "1-36" },
+      { chapter: "02", title: "Zero Trust Identity Architecture", pages: "37-88" },
+      { chapter: "03", title: "Incident Response Playbook", pages: "89-148" },
+      { chapter: "04", title: "Post-Incident Recovery & Forensics", pages: "149-198" }
     ],
     sampleContent: [
       {
-        chapterTitle: 'Weeks 1-3: SaaS Overhead Audit',
+        chapterTitle: "Chapter 1: The Perimeter is Dead",
         pageNumber: 18,
-        text: 'The average 25-person firm pays for 38 distinct software subscriptions, 14 of which are either duplicates or billed for former employees. An immediate credit card subscription scrub typically recoups $900-$2,400 monthly in dead overhead.'
+        text: "Assume compromise. Verify every identity, validate device compliance, and enforce micro-segmentation."
       }
     ],
     includedAssets: [
-      '12-Week Sprint Tracking Spreadsheet (Trello / Notion / Excel)',
-      'SaaS Redundancy Audit Protocol',
-      'Contractor Non-Disclosure & Remote Access Agreement'
+      "1-Hour Incident Response Checklist (.pdf)",
+      "Vendor Security Due Diligence Audit (.docx)"
     ],
-    coverImage: '',
     coverDesign: {
-      theme: 'charcoal',
-      bgColor: '#18181b',
-      accentColor: '#fbbf24',
-      textColor: '#f4f4f5',
-      pattern: 'minimalist-rule',
-      showCoverImage: false,
-      spineText: '90-DAY MODERNIZATION PLAYBOOK — JNJ'
+      theme: "crimson",
+      bgColor: "#4c0519",
+      accentColor: "#f43f5e",
+      textColor: "#fff1f2",
+      pattern: "shield",
+      showCoverImage: true
     },
-    rating: 4.90,
-    reviewCount: 22,
-    salesCount: 160
+    rating: 5.0,
+    reviewCount: 42,
+    salesCount: 110
+  },
+  {
+    id: "pragmatic-ai-workflow-optimization",
+    sku: "JNJ-BK-004",
+    title: "Pragmatic AI & Workflow Optimization",
+    subtitle: "Integrating Language Models and Automation into Operations",
+    author: "JNJ Innovations AI Research",
+    price: 49,
+    originalPrice: 79,
+    isOnSale: true,
+    category: "AI & Analytics",
+    inventoryCount: 9999,
+    isUnlimited: true,
+    status: "active",
+    format: ["PDF", "ePub", "Prompt System Libraries"],
+    pages: 210,
+    publishedYear: "2026",
+    edition: "2026 Release",
+    badgeText: "Trending",
+    description: "Real-world operational AI applications that eliminate repetitive paperwork and enhance team throughput.",
+    longDescription: "Moving past hype: clear architectural guidelines for privacy-compliant AI adoption in regulated industries.",
+    tableOfContents: [
+      { chapter: "01", title: "Evaluating Practical AI Opportunities", pages: "1-40" },
+      { chapter: "02", title: "Data Privacy & Governance Boundaries", pages: "41-90" },
+      { chapter: "03", title: "Structured Extraction & Workflow Bots", pages: "91-155" },
+      { chapter: "04", title: "Human-in-the-Loop Quality Assurance", pages: "156-210" }
+    ],
+    sampleContent: [
+      {
+        chapterTitle: "Chapter 2: Privacy First",
+        pageNumber: 48,
+        text: "Never send proprietary customer data to public model endpoints without client-side anonymization."
+      }
+    ],
+    includedAssets: [
+      "Production System Prompts (.txt)",
+      "API Cost Forecasting Sheet (.xlsx)"
+    ],
+    coverDesign: {
+      theme: "amethyst",
+      bgColor: "#3b0764",
+      accentColor: "#c084fc",
+      textColor: "#faf5ff",
+      pattern: "neural-network",
+      showCoverImage: true
+    },
+    rating: 4.9,
+    reviewCount: 51,
+    salesCount: 165
+  },
+  {
+    id: "executive-digital-transformation-roadmap",
+    sku: "JNJ-BK-005",
+    title: "Executive Digital Transformation Roadmap",
+    subtitle: "A C-Suite Field Guide to Software Investments & Cultural Change",
+    author: "JNJ Innovations Strategy Partners",
+    price: 59,
+    originalPrice: 79,
+    isOnSale: false,
+    category: "Leadership & Operations",
+    inventoryCount: 30,
+    isUnlimited: false,
+    status: "active",
+    format: ["PDF", "Executive Slide Deck Template"],
+    pages: 168,
+    publishedYear: "2026",
+    edition: "Executive Briefing",
+    badgeText: "Boardroom Favorite",
+    description: "Frameworks for budgeting, executing, and measuring tech initiatives without consultants on retainers.",
+    longDescription: "Bridge the communication gap between business vision and engineering execution.",
+    tableOfContents: [
+      { chapter: "01", title: "Aligning Tech Initiatives with EBITDA", pages: "1-38" },
+      { chapter: "02", title: "Overcoming Staff Resistance", pages: "39-82" },
+      { chapter: "03", title: "Vendor Contract Negotiation Playbook", pages: "83-125" },
+      { chapter: "04", title: "Measuring Real Velocity", pages: "126-168" }
+    ],
+    sampleContent: [
+      {
+        chapterTitle: "Chapter 1: The Real Cost of Stagnation",
+        pageNumber: 22,
+        text: "Technology debt accrues interest exponentially. Tackle high-friction bottlenecks before scaling headcount."
+      }
+    ],
+    includedAssets: [
+      "Board Presentation Deck Template (.pptx)",
+      "Digital Maturity Scorecard (.xlsx)"
+    ],
+    coverDesign: {
+      theme: "emerald",
+      bgColor: "#064e3b",
+      accentColor: "#34d399",
+      textColor: "#ecfdf5",
+      pattern: "minimalist-rule",
+      showCoverImage: true
+    },
+    rating: 4.9,
+    reviewCount: 19,
+    salesCount: 64
+  },
+  {
+    id: "industrial-iot-edge-computing",
+    sku: "JNJ-BK-006",
+    title: "Industrial IoT & Edge Computing Playbook",
+    subtitle: "Connecting Shop Floors, Sensors, and Real-Time Telemetry",
+    author: "JNJ Innovations Advanced Manufacturing",
+    price: 49,
+    originalPrice: 65,
+    isOnSale: false,
+    category: "Automation",
+    inventoryCount: 12,
+    isUnlimited: false,
+    status: "low_stock",
+    format: ["PDF", "ePub", "Modbus & MQTT Reference"],
+    pages: 220,
+    publishedYear: "2026",
+    edition: "Industrial Series",
+    badgeText: "Specialized",
+    description: "Practical sensor connectivity, predictive maintenance, and local compute on factory floors.",
+    longDescription: "A pragmatic guide to extracting machine telemetry from legacy PLC systems without stopping the line.",
+    tableOfContents: [
+      { chapter: "01", title: "Legacy PLC & Sensor Interfacing", pages: "1-45" },
+      { chapter: "02", title: "Edge Compute Gateways & MQTT", pages: "46-105" },
+      { chapter: "03", title: "Predictive Anomaly Detection", pages: "106-168" },
+      { chapter: "04", title: "Secure Local-to-Cloud Pipes", pages: "169-220" }
+    ],
+    sampleContent: [
+      {
+        chapterTitle: "Chapter 2: Robust Shop Floor Gateways",
+        pageNumber: 52,
+        text: "Shop floors suffer power blips and electrical noise. Always decouple sensor I/O with optoisolators."
+      }
+    ],
+    includedAssets: [
+      "MQTT Sensor Gateway Config (.yaml)",
+      "Predictive Maintenance Threshold Guide (.pdf)"
+    ],
+    coverDesign: {
+      theme: "steel",
+      bgColor: "#1e293b",
+      accentColor: "#94a3b8",
+      textColor: "#f8fafc",
+      pattern: "circuit-matrix",
+      showCoverImage: true
+    },
+    rating: 4.7,
+    reviewCount: 14,
+    salesCount: 41
   }
 ];

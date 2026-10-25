@@ -11,7 +11,7 @@ import CartDrawer from "./components/CartDrawer";
 import EbookSampleModal from "./components/EbookSampleModal";
 import Footer from "./components/Footer";
 import { EbookItem, CartItem, LicenseTier } from "./types";
-import { getStoredEbooks } from "./utils/ebookStore";
+import { getStoredEbooks, syncWithMongoDB } from "./utils/ebookStore";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>("home");
@@ -27,8 +27,15 @@ export default function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [sampleModalBook, setSampleModalBook] = useState<EbookItem | null>(null);
 
-  // Sync catalog updates
+  // Sync catalog updates and pull from MongoDB on mount
   useEffect(() => {
+    // Automatically load latest playbooks from MongoDB Atlas
+    syncWithMongoDB().then((books) => {
+      if (books && books.length > 0) {
+        setEbooks(books);
+      }
+    });
+
     const handleStorageUpdate = () => {
       setEbooks(getStoredEbooks());
     };
