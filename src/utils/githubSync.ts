@@ -113,7 +113,8 @@ export async function commitCatalogToGitHub(
   }
 
   const { owner, repo, branch, catalogPath, token } = cfg;
-  const contentStr = JSON.stringify(catalog, null, 2);
+  const isTypeScript = catalogPath.endsWith('.ts') || catalogPath.endsWith('.tsx');
+  const contentStr = isTypeScript ? generateDefaultEbooksCode(catalog) : JSON.stringify(catalog, null, 2);
   const contentBase64 = btoa(unescape(encodeURIComponent(contentStr)));
 
   try {
