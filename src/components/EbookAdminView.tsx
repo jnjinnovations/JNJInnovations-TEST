@@ -11,8 +11,14 @@ import {
   getMongoDBStatus,
   syncWithMongoDB,
   syncCatalogToMongoDB,
+  testBackendHealth,
   type MongoStatusResponse
 } from '../utils/ebookStore';
+import {
+  getApiBaseUrl,
+  setApiBaseUrl,
+  isStaticHostWithoutBackend
+} from '../utils/apiConfig';
 import {
   Package,
   DollarSign,
@@ -36,7 +42,10 @@ import {
   Database,
   CheckCircle2,
   AlertCircle,
-  ExternalLink
+  ExternalLink,
+  Server,
+  Globe,
+  Activity
 } from 'lucide-react';
 import GitHubCommitModal from './GitHubCommitModal';
 import { getGitHubConfig, commitCatalogToGitHub } from '../utils/githubSync';
@@ -104,13 +113,19 @@ export default function EbookAdminView({
   const [isSyncingMongo, setIsSyncingMongo] = useState(false);
   const [showMongoDetails, setShowMongoDetails] = useState(false);
 
+  // Production API URL settings (for GitHub Pages -> Cloud Run / Render routing)
+  const [customApiUrl, setCustomApiUrl] = useState(() => getApiBaseUrl());
+  const [showApiSettings, setShowApiSettings] = useState(() => isStaticHostWithoutBackend());
+  const [isTestingApi, setIsTestingApi] = useState(false);
+  const [apiTestResult, setApiTestResult] = useState<{ ok: boolean; message: string; latencyMs: number } | null>(null);
+
   const checkMongo = async (force = false) => {
     setIsCheckingMongo(true);
     try {
       const status = await getMongoDBStatus(force);
       setMongoStatus(status);
-    } catch {
-      setMongoStatus({ connected: false, error: 'Could not reach server endpoint' });
+    } catch (e: any) {
+      setMongoStatus({ connected: false, error: e.message || 'Could not reach server endpoint' });
     } finally {
       setIsCheckingMongo(false);
     }
@@ -118,16 +133,45 @@ export default function EbookAdminView({
 
   useEffect(() => {
     checkMongo();
+    const handleApiChanged = () => {
+      setCustomApiUrl(getApiBaseUrl());
+      checkMongo(true);
+    };
+    window.addEventListener('jnj-api-config-changed', handleApiChanged);
+    return () => window.removeEventListener('jnj-api-config-changed', handleApiChanged);
   }, []);
+
+  const handleSaveApiUrl = () => {
+    setApiBaseUrl(customApiUrl);
+    showToast('API base URL updated');
+    handleTestApiHealth();
+    checkMongo(true);
+  };
+
+  const handleTestApiHealth = async () => {
+    setIsTestingApi(true);
+    setApiTestResult(null);
+    try {
+      const result = await testBackendHealth();
+      setApiTestResult(result);
+    } catch (err: any) {
+      setApiTestResult({ ok: false, message: `Ping failed: ${err.message}`, latencyMs: 0 });
+    } finally {
+      setIsTestingApi(false);
+    }
+  };
 
   const handlePullFromMongo = async () => {
     setIsSyncingMongo(true);
     try {
-      const books = await syncWithMongoDB();
+      // Use strict=true so failures do not silently fall back to local mock data
+      const books = await syncWithMongoDB(true);
       onUpdateEbooks(books);
-      showToast('Catalog refreshed from MongoDB Atlas');
+      showToast(`Successfully synced ${books.length} playbooks from MongoDB Atlas`);
+      checkMongo(true);
     } catch (e: any) {
       showToast(`Sync error: ${e.message}`);
+      checkMongo(true);
     } finally {
       setIsSyncingMongo(false);
     }
@@ -138,13 +182,14 @@ export default function EbookAdminView({
     try {
       const res = await syncCatalogToMongoDB(ebooks);
       if (res.success) {
-        showToast('All playbooks saved to MongoDB Atlas!');
+        showToast(res.message);
       } else {
         showToast(`MongoDB warning: ${res.message}`);
       }
-      checkMongo();
+      checkMongo(true);
     } catch (e: any) {
       showToast(`Error saving to MongoDB: ${e.message}`);
+      checkMongo(true);
     } finally {
       setIsSyncingMongo(false);
     }
@@ -445,6 +490,8 @@ export default function EbookAdminView({
             ? 'bg-emerald-50/60 border-emerald-200' 
             : mongoStatus?.isIpWhitelistError 
             ? 'bg-amber-50/80 border-amber-300' 
+            : mongoStatus?.isStaticHostMissingBackend
+            ? 'bg-sky-50/80 border-sky-300'
             : 'bg-slate-50 border-slate-200'
         }`}>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -454,6 +501,8 @@ export default function EbookAdminView({
                   ? 'bg-emerald-600 text-white' 
                   : mongoStatus?.isIpWhitelistError 
                   ? 'bg-amber-600 text-white' 
+                  : mongoStatus?.isStaticHostMissingBackend
+                  ? 'bg-sky-700 text-white'
                   : 'bg-slate-700 text-white'
               }`}>
                 <Database className="w-5 h-5" />
@@ -466,12 +515,22 @@ export default function EbookAdminView({
                   {mongoStatus?.connected ? (
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      Live Cluster Connected
+                      Live Cluster Connected {mongoStatus.documentCount !== undefined ? `(${mongoStatus.documentCount} items)` : ''}
+                    </span>
+                  ) : mongoStatus?.isStaticHostMissingBackend ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-100 text-sky-800 border border-sky-300">
+                      <Globe className="w-3 h-3 text-sky-600" />
+                      Static Hosting (GitHub Pages) · Backend URL Needed
                     </span>
                   ) : mongoStatus?.isIpWhitelistError ? (
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
                       <AlertCircle className="w-3 h-3 text-amber-600" />
                       Network Access (IP Whitelist) Required
+                    </span>
+                  ) : mongoStatus?.isCorsError ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-300">
+                      <AlertCircle className="w-3 h-3 text-red-600" />
+                      CORS / Network Error
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">
@@ -481,18 +540,32 @@ export default function EbookAdminView({
                   )}
                 </div>
 
-                <p className="text-xs text-slate-600 mt-1">
+                <p className="text-xs text-slate-600 mt-1 flex flex-wrap items-center gap-1.5">
                   <span className="font-mono text-slate-700 font-medium">Cluster: jnjtestcluster.695tiet.mongodb.net</span>
-                  <span className="mx-1.5 text-slate-400">·</span>
+                  <span className="text-slate-400">·</span>
                   <span className="font-mono text-slate-700">DB: jnj_innovations</span>
-                  <span className="mx-1.5 text-slate-400">·</span>
+                  <span className="text-slate-400">·</span>
                   <span className="font-mono text-slate-700">Collection: playbooks</span>
+                  <span className="text-slate-400">·</span>
+                  <span className="font-mono text-slate-500">
+                    API: {customApiUrl || 'Same-origin (Built-in Server)'}
+                  </span>
                 </p>
 
                 {mongoStatus?.connected ? (
                   <p className="text-xs text-emerald-700 font-medium mt-1">
                     Playbook inventory, pricing adjustments, custom designs, and new titles automatically sync to your MongoDB Atlas collection.
                   </p>
+                ) : mongoStatus?.isStaticHostMissingBackend ? (
+                  <div className="mt-2 text-xs text-sky-950 bg-sky-100/70 border border-sky-300/60 rounded-lg p-3">
+                    <p className="font-semibold flex items-center gap-1.5 text-sky-900">
+                      <Globe className="w-4 h-4 text-sky-600 shrink-0" />
+                      Why HTTP 404 occurs in GitHub Pages
+                    </p>
+                    <p className="mt-1 text-sky-800">
+                      GitHub Pages hosts static HTML/JS only and cannot execute the Node.js backend. To connect live MongoDB Atlas from your deployed website, deploy the backend to <strong>Google Cloud Run</strong> or <strong>Render</strong> and enter your backend URL below.
+                    </p>
+                  </div>
                 ) : mongoStatus?.isIpWhitelistError ? (
                   <div className="mt-2 text-xs text-amber-900 bg-amber-100/70 border border-amber-300/60 rounded-lg p-3">
                     <p className="font-semibold flex items-center gap-1.5 text-amber-950">
@@ -500,14 +573,14 @@ export default function EbookAdminView({
                       MongoDB Atlas TLS alert 80: IP whitelist configuration needed
                     </p>
                     <p className="mt-1 text-amber-800">
-                      Your database credentials (<code className="font-mono font-semibold">jnjinnovations1_db_user</code>) are valid, but Atlas firewall blocks incoming traffic from new IPs by default.
+                      Your database credentials (<code className="font-mono font-semibold">jnjinnovations1_db_user</code>) are valid, but Atlas firewall blocks incoming traffic from new hosting IPs by default.
                     </p>
                     <div className="mt-2 text-[11px] font-medium text-amber-900 bg-white/70 p-2 rounded border border-amber-200">
                       <strong>To enable:</strong> Log in to MongoDB Atlas &rarr; <strong>Security</strong> &rarr; <strong>Network Access</strong> &rarr; Click <strong>+ Add IP Address</strong> &rarr; Select <strong>Allow Access From Anywhere (0.0.0.0/0)</strong> &rarr; Confirm. Once saved, click &quot;Test Connection&quot; below.
                     </div>
                   </div>
                 ) : mongoStatus?.error ? (
-                  <p className="text-xs text-red-600 mt-1">
+                  <p className="text-xs text-red-600 mt-1 font-mono">
                     Status info: {mongoStatus.error}
                   </p>
                 ) : null}
@@ -520,6 +593,7 @@ export default function EbookAdminView({
                 onClick={() => checkMongo(true)}
                 disabled={isCheckingMongo}
                 className="flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-60"
+                title="Test live connectivity to MongoDB Atlas"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isCheckingMongo ? 'animate-spin' : ''}`} />
                 {isCheckingMongo ? 'Checking...' : 'Test Connection'}
@@ -530,6 +604,7 @@ export default function EbookAdminView({
                 onClick={handlePullFromMongo}
                 disabled={isSyncingMongo}
                 className="flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-60"
+                title="Fetch latest playbooks directly from MongoDB Atlas"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isSyncingMongo ? 'animate-spin' : ''}`} />
                 {isSyncingMongo ? 'Syncing...' : 'Sync from Atlas'}
@@ -540,12 +615,99 @@ export default function EbookAdminView({
                 onClick={handlePushToMongo}
                 disabled={isSyncingMongo}
                 className="flex items-center gap-1.5 bg-[#0A1628] hover:bg-slate-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-60"
+                title="Safely upsert all playbooks to MongoDB Atlas"
               >
                 <Upload className="w-3.5 h-3.5 text-sky-400" />
                 Push Catalog to Atlas
               </button>
+
+              <button
+                type="button"
+                onClick={() => setShowApiSettings(!showApiSettings)}
+                className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors cursor-pointer ${
+                  showApiSettings
+                    ? 'bg-slate-800 text-white border-slate-800'
+                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                }`}
+                title="Configure Backend API endpoint URL"
+              >
+                <Server className="w-3.5 h-3.5 text-sky-500" />
+                {showApiSettings ? 'Hide API Config' : 'API Endpoint'}
+              </button>
             </div>
           </div>
+
+          {/* API Endpoint Configuration Drawer */}
+          {showApiSettings && (
+            <div className="mt-4 pt-4 border-t border-slate-200/80 space-y-3 animate-fade-in">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h4 className="font-display font-semibold text-xs text-slate-900 flex items-center gap-1.5">
+                    <Server className="w-3.5 h-3.5 text-sky-600" />
+                    Production Backend API Configuration
+                  </h4>
+                  <p className="text-[11px] text-slate-500">
+                    Connects this frontend to your deployed Node.js / Express backend server running on Google Cloud Run, Render, or Railway.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleTestApiHealth}
+                    disabled={isTestingApi}
+                    className="flex items-center gap-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg cursor-pointer disabled:opacity-60"
+                  >
+                    <Activity className={`w-3 h-3 text-sky-500 ${isTestingApi ? 'animate-spin' : ''}`} />
+                    {isTestingApi ? 'Pinging...' : 'Ping /api/health'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="url"
+                    value={customApiUrl}
+                    onChange={(e) => setCustomApiUrl(e.target.value)}
+                    placeholder="https://your-api-service.run.app (Leave blank for same-origin dev server)"
+                    className="w-full text-xs font-mono px-3 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0A1628]"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSaveApiUrl}
+                    className="bg-[#0A1628] hover:bg-slate-800 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
+                  >
+                    Save & Test
+                  </button>
+                  {customApiUrl && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCustomApiUrl('');
+                        setApiBaseUrl('');
+                        showToast('Reset to default same-origin API');
+                        checkMongo(true);
+                      }}
+                      className="bg-white hover:bg-slate-50 text-slate-600 border border-slate-300 text-xs font-medium px-2.5 py-2 rounded-lg cursor-pointer whitespace-nowrap"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {apiTestResult && (
+                <div className={`p-2.5 rounded-lg text-xs font-mono flex items-center gap-2 ${
+                  apiTestResult.ok ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'
+                }`}>
+                  {apiTestResult.ok ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />}
+                  <span>{apiTestResult.message}</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
