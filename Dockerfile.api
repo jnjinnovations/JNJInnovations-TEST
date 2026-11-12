@@ -1,0 +1,25 @@
+# Production Container for Google Cloud Run, Render, or Railway
+FROM node:20-alpine
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PORT=8080
+
+# Copy dependency manifests
+COPY package*.json ./
+
+# Install production dependencies only (no TypeScript or Vite build overhead required for server.js)
+RUN npm ci --omit=dev
+
+# Copy server code and fallback catalog assets
+COPY server.js ./server.js
+COPY public ./public
+
+# Use non-root node user for container security
+USER node
+
+EXPOSE 8080
+
+# Start pure Node.js Express server
+CMD ["node", "server.js"]

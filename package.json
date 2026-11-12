@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
+    "prebuild": "node scripts/fetch-mongo-catalog.js",
     "build": "vite build",
     "start": "tsx server.ts",
     "lint": "tsc --noEmit"

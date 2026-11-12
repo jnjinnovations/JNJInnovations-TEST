@@ -1,5 +1,76 @@
 [
   {
+    "id": "90-day-modernization-playbook",
+    "sku": "JNJ-BK-006",
+    "title": "The 90-Day Tech Modernization Playbook",
+    "subtitle": "Rapid Tactical Upgrades for Michigan Small Business",
+    "author": "JNJ Innovations Advisory Practice",
+    "price": 32,
+    "isOnSale": false,
+    "category": "Strategy",
+    "inventoryCount": 65,
+    "isUnlimited": false,
+    "status": "active",
+    "format": [
+      "PDF",
+      "ePub",
+      "Weekly Sprints Checklist"
+    ],
+    "pages": 154,
+    "publishedYear": "2026",
+    "edition": "Advisory Edition",
+    "badgeText": "Fast Track",
+    "description": "A structured 12-week sprint program to audit, clean up, and modernize your company’s hardware, software licenses, and customer interfaces.",
+    "longDescription": "Designed for owner-operators who need quick operational wins in one fiscal quarter. Week-by-week actions that immediately trim software overhead, secure staff accounts, and streamline customer communication.",
+    "tableOfContents": [
+      {
+        "chapter": "01",
+        "title": "Weeks 1-3: Hardware & SaaS Overhead Audit",
+        "pages": "1-34"
+      },
+      {
+        "chapter": "02",
+        "title": "Weeks 4-6: Email, Domain & Account Hardening",
+        "pages": "35-68"
+      },
+      {
+        "chapter": "03",
+        "title": "Weeks 7-9: Customer Communication & Booking Flows",
+        "pages": "69-106"
+      },
+      {
+        "chapter": "04",
+        "title": "Weeks 10-12: Unified Metric Dashboard & Handover",
+        "pages": "107-154"
+      }
+    ],
+    "sampleContent": [
+      {
+        "chapterTitle": "Weeks 1-3: SaaS Overhead Audit",
+        "pageNumber": 18,
+        "text": "The average 25-person firm pays for 38 distinct software subscriptions, 14 of which are either duplicates or billed for former employees. An immediate credit card subscription scrub typically recoups $900-$2,400 monthly in dead overhead."
+      }
+    ],
+    "includedAssets": [
+      "12-Week Sprint Tracking Spreadsheet (Trello / Notion / Excel)",
+      "SaaS Redundancy Audit Protocol",
+      "Contractor Non-Disclosure & Remote Access Agreement"
+    ],
+    "coverImage": "",
+    "coverDesign": {
+      "theme": "charcoal",
+      "bgColor": "#18181b",
+      "accentColor": "#fbbf24",
+      "textColor": "#f4f4f5",
+      "pattern": "minimalist-rule",
+      "showCoverImage": false,
+      "spineText": "90-DAY MODERNIZATION PLAYBOOK — JNJ"
+    },
+    "rating": 4.9,
+    "reviewCount": 22,
+    "salesCount": 160
+  },
+  {
     "id": "michigan-smb-automation-blueprint",
     "sku": "JNJ-BK-001",
     "title": "Michigan SMB Automation Blueprint",
@@ -89,6 +160,160 @@
     "salesCount": 312
   },
   {
+    "id": "cloud-migration-infrastructure-architecture",
+    "sku": "JNJ-BK-003",
+    "title": "Cloud Migration & Infrastructure Architecture",
+    "subtitle": "Zero-Downtime Transition Framework for Legacy Systems",
+    "author": "Samuel Oakley & Luna Chen",
+    "price": 45,
+    "isOnSale": false,
+    "category": "Cloud Infrastructure",
+    "inventoryCount": 9999,
+    "isUnlimited": true,
+    "status": "active",
+    "format": [
+      "PDF",
+      "ePub",
+      "Terraform Modules",
+      "Visio Stencils"
+    ],
+    "pages": 216,
+    "publishedYear": "2026",
+    "edition": "Architect Edition",
+    "badgeText": "Technical Deep-Dive",
+    "description": "Practical playbook for decommissioning legacy physical server racks and executing clean, cost-efficient migrations into modern multi-cloud environments.",
+    "longDescription": "Covers live database streaming replication, VPC peering, Kubernetes vs serverless container trade-offs, and how to prevent surprise cloud bills from crippling small enterprise margins.",
+    "tableOfContents": [
+      {
+        "chapter": "01",
+        "title": "Auditing On-Premise Monoliths & Deprecations",
+        "pages": "1-32"
+      },
+      {
+        "chapter": "02",
+        "title": "Data Migration Strategies with Zero Cutover Loss",
+        "pages": "33-78"
+      },
+      {
+        "chapter": "03",
+        "title": "Right-Sizing Compute & Reserved Instance Economics",
+        "pages": "79-122"
+      },
+      {
+        "chapter": "04",
+        "title": "Infrastructure as Code with Terraform & Pulumi",
+        "pages": "123-174"
+      },
+      {
+        "chapter": "05",
+        "title": "Post-Migration Observability, SLOs & Alerting",
+        "pages": "175-216"
+      }
+    ],
+    "sampleContent": [
+      {
+        "chapterTitle": "Chapter 2: Data Migration Strategies with Zero Cutover Loss",
+        "pageNumber": 48,
+        "text": "The single most common mistake during database migrations is the hard weekend maintenance window. In this section, we show how logical replication with CDC (Change Data Capture) allows the target cloud replica to remain in lockstep with the on-premise master, enabling a failover switch in under four seconds."
+      }
+    ],
+    "includedAssets": [
+      "Turnkey Terraform Production Starter Stack for AWS & GCP",
+      "Cloud TCO & Monthly Cost Calculator (Excel with formula guides)",
+      "Incident Drill Tabletop Scenarios PDF"
+    ],
+    "coverImage": "/src/assets/images/cloud_infrastructure_guide_1792526862062.jpg",
+    "coverDesign": {
+      "theme": "steel",
+      "bgColor": "#111827",
+      "accentColor": "#38bdf8",
+      "textColor": "#f9fafb",
+      "pattern": "geometric-cubes",
+      "showCoverImage": true,
+      "spineText": "CLOUD MIGRATION ARCHITECTURE — OAKLEY & CHEN"
+    },
+    "rating": 4.92,
+    "reviewCount": 29,
+    "salesCount": 187
+  },
+  {
+    "id": "lean-systems-erp-implementation",
+    "sku": "JNJ-BK-005",
+    "title": "Lean Systems & ERP Implementation",
+    "subtitle": "Modernizing Mid-Market Manufacturing & Supply Chains",
+    "author": "Elena Rostova & JNJ Industrial Team",
+    "price": 39,
+    "salePrice": 29,
+    "isOnSale": true,
+    "category": "Operations",
+    "inventoryCount": 50,
+    "isUnlimited": false,
+    "status": "active",
+    "format": [
+      "PDF",
+      "ePub",
+      "ERP Evaluation Matrix"
+    ],
+    "pages": 176,
+    "publishedYear": "2026",
+    "edition": "First Edition",
+    "badgeText": "New Release",
+    "description": "How to select, customize, and roll out ERP systems without halting factory floor production or alienating veteran staff.",
+    "longDescription": "Draws on 40+ regional manufacturing turnarounds in Michigan and the Midwest. Details shop floor data collection, barcode tracking, BOM accuracy, and the psychological side of digital transformation.",
+    "tableOfContents": [
+      {
+        "chapter": "01",
+        "title": "Why 70% of Mid-Market ERP Rollouts Stall",
+        "pages": "1-30"
+      },
+      {
+        "chapter": "02",
+        "title": "Vendor Scoring: NetSuite, Acumatica, Odoo & Infor",
+        "pages": "31-72"
+      },
+      {
+        "chapter": "03",
+        "title": "Shop-Floor Data Capture & Clean Master Records",
+        "pages": "73-118"
+      },
+      {
+        "chapter": "04",
+        "title": "Change Management for Floor Supervisors & Techs",
+        "pages": "119-150"
+      },
+      {
+        "chapter": "05",
+        "title": "Continuous Improvement After Go-Live",
+        "pages": "151-176"
+      }
+    ],
+    "sampleContent": [
+      {
+        "chapterTitle": "Chapter 1: Why 70% of ERP Rollouts Stall",
+        "pageNumber": 14,
+        "text": "The failure is almost never software code; it is unclean data migrated into pristine fields. If your existing SKU hierarchy contains 3,000 duplicate parts, no cloud subscription will miraculously fix shipping accuracy. Step zero is radical data hygiene."
+      }
+    ],
+    "includedAssets": [
+      "Comprehensive ERP Vendor Selection Matrix (Weighted Scoring)",
+      "Data Cleansing & Master Record Migration Checklist",
+      "Change Management Communication Templates"
+    ],
+    "coverImage": "",
+    "coverDesign": {
+      "theme": "emerald",
+      "bgColor": "#064e3b",
+      "accentColor": "#34d399",
+      "textColor": "#ecfdf5",
+      "pattern": "circuit-matrix",
+      "showCoverImage": false,
+      "spineText": "LEAN SYSTEMS & ERP IMPLEMENTATION — ROSTOVA"
+    },
+    "rating": 4.85,
+    "reviewCount": 19,
+    "salesCount": 114
+  },
+  {
     "id": "operational-ai-in-enterprise",
     "sku": "JNJ-BK-002",
     "title": "Operational AI in Enterprise",
@@ -172,83 +397,6 @@
     "salesCount": 244
   },
   {
-    "id": "cloud-migration-infrastructure-architecture",
-    "sku": "JNJ-BK-003",
-    "title": "Cloud Migration & Infrastructure Architecture",
-    "subtitle": "Zero-Downtime Transition Framework for Legacy Systems",
-    "author": "Samuel Oakley & Luna Chen",
-    "price": 45,
-    "isOnSale": false,
-    "category": "Cloud Infrastructure",
-    "inventoryCount": 9999,
-    "isUnlimited": true,
-    "status": "active",
-    "format": [
-      "PDF",
-      "ePub",
-      "Terraform Modules",
-      "Visio Stencils"
-    ],
-    "pages": 216,
-    "publishedYear": "2026",
-    "edition": "Architect Edition",
-    "badgeText": "Technical Deep-Dive",
-    "description": "Practical playbook for decommissioning legacy physical server racks and executing clean, cost-efficient migrations into modern multi-cloud environments.",
-    "longDescription": "Covers live database streaming replication, VPC peering, Kubernetes vs serverless container trade-offs, and how to prevent surprise cloud bills from crippling small enterprise margins.",
-    "tableOfContents": [
-      {
-        "chapter": "01",
-        "title": "Auditing On-Premise Monoliths & Deprecations",
-        "pages": "1-32"
-      },
-      {
-        "chapter": "02",
-        "title": "Data Migration Strategies with Zero Cutover Loss",
-        "pages": "33-78"
-      },
-      {
-        "chapter": "03",
-        "title": "Right-Sizing Compute & Reserved Instance Economics",
-        "pages": "79-122"
-      },
-      {
-        "chapter": "04",
-        "title": "Infrastructure as Code with Terraform & Pulumi",
-        "pages": "123-174"
-      },
-      {
-        "chapter": "05",
-        "title": "Post-Migration Observability, SLOs & Alerting",
-        "pages": "175-216"
-      }
-    ],
-    "sampleContent": [
-      {
-        "chapterTitle": "Chapter 2: Data Migration Strategies with Zero Cutover Loss",
-        "pageNumber": 48,
-        "text": "The single most common mistake during database migrations is the hard weekend maintenance window. In this section, we show how logical replication with CDC (Change Data Capture) allows the target cloud replica to remain in lockstep with the on-premise master, enabling a failover switch in under four seconds."
-      }
-    ],
-    "includedAssets": [
-      "Turnkey Terraform Production Starter Stack for AWS & GCP",
-      "Cloud TCO & Monthly Cost Calculator (Excel with formula guides)",
-      "Incident Drill Tabletop Scenarios PDF"
-    ],
-    "coverImage": "/src/assets/images/cloud_infrastructure_guide_1792526862062.jpg",
-    "coverDesign": {
-      "theme": "steel",
-      "bgColor": "#111827",
-      "accentColor": "#38bdf8",
-      "textColor": "#f9fafb",
-      "pattern": "geometric-cubes",
-      "showCoverImage": true,
-      "spineText": "CLOUD MIGRATION ARCHITECTURE — OAKLEY & CHEN"
-    },
-    "rating": 4.92,
-    "reviewCount": 29,
-    "salesCount": 187
-  },
-  {
     "id": "cybersecurity-compliance-governance",
     "sku": "JNJ-BK-004",
     "title": "Cybersecurity & Compliance Governance",
@@ -324,153 +472,5 @@
     "rating": 4.97,
     "reviewCount": 42,
     "salesCount": 295
-  },
-  {
-    "id": "lean-systems-erp-implementation",
-    "sku": "JNJ-BK-005",
-    "title": "Lean Systems & ERP Implementation",
-    "subtitle": "Modernizing Mid-Market Manufacturing & Supply Chains",
-    "author": "Elena Rostova & JNJ Industrial Team",
-    "price": 39,
-    "salePrice": 29,
-    "isOnSale": true,
-    "category": "Operations",
-    "inventoryCount": 50,
-    "isUnlimited": false,
-    "status": "active",
-    "format": [
-      "PDF",
-      "ePub",
-      "ERP Evaluation Matrix"
-    ],
-    "pages": 176,
-    "publishedYear": "2026",
-    "edition": "First Edition",
-    "badgeText": "New Release",
-    "description": "How to select, customize, and roll out ERP systems without halting factory floor production or alienating veteran staff.",
-    "longDescription": "Draws on 40+ regional manufacturing turnarounds in Michigan and the Midwest. Details shop floor data collection, barcode tracking, BOM accuracy, and the psychological side of digital transformation.",
-    "tableOfContents": [
-      {
-        "chapter": "01",
-        "title": "Why 70% of Mid-Market ERP Rollouts Stall",
-        "pages": "1-30"
-      },
-      {
-        "chapter": "02",
-        "title": "Vendor Scoring: NetSuite, Acumatica, Odoo & Infor",
-        "pages": "31-72"
-      },
-      {
-        "chapter": "03",
-        "title": "Shop-Floor Data Capture & Clean Master Records",
-        "pages": "73-118"
-      },
-      {
-        "chapter": "04",
-        "title": "Change Management for Floor Supervisors & Techs",
-        "pages": "119-150"
-      },
-      {
-        "chapter": "05",
-        "title": "Continuous Improvement After Go-Live",
-        "pages": "151-176"
-      }
-    ],
-    "sampleContent": [
-      {
-        "chapterTitle": "Chapter 1: Why 70% of ERP Rollouts Stall",
-        "pageNumber": 14,
-        "text": "The failure is almost never software code; it is unclean data migrated into pristine fields. If your existing SKU hierarchy contains 3,000 duplicate parts, no cloud subscription will miraculously fix shipping accuracy. Step zero is radical data hygiene."
-      }
-    ],
-    "includedAssets": [
-      "Comprehensive ERP Vendor Selection Matrix (Weighted Scoring)",
-      "Data Cleansing & Master Record Migration Checklist",
-      "Change Management Communication Templates"
-    ],
-    "coverImage": "",
-    "coverDesign": {
-      "theme": "emerald",
-      "bgColor": "#064e3b",
-      "accentColor": "#34d399",
-      "textColor": "#ecfdf5",
-      "pattern": "circuit-matrix",
-      "showCoverImage": false,
-      "spineText": "LEAN SYSTEMS & ERP IMPLEMENTATION — ROSTOVA"
-    },
-    "rating": 4.85,
-    "reviewCount": 19,
-    "salesCount": 114
-  },
-  {
-    "id": "90-day-modernization-playbook",
-    "sku": "JNJ-BK-006",
-    "title": "The 90-Day Tech Modernization Playbook",
-    "subtitle": "Rapid Tactical Upgrades for Michigan Small Business",
-    "author": "JNJ Innovations Advisory Practice",
-    "price": 32,
-    "isOnSale": false,
-    "category": "Strategy",
-    "inventoryCount": 65,
-    "isUnlimited": false,
-    "status": "active",
-    "format": [
-      "PDF",
-      "ePub",
-      "Weekly Sprints Checklist"
-    ],
-    "pages": 154,
-    "publishedYear": "2026",
-    "edition": "Advisory Edition",
-    "badgeText": "Fast Track",
-    "description": "A structured 12-week sprint program to audit, clean up, and modernize your company’s hardware, software licenses, and customer interfaces.",
-    "longDescription": "Designed for owner-operators who need quick operational wins in one fiscal quarter. Week-by-week actions that immediately trim software overhead, secure staff accounts, and streamline customer communication.",
-    "tableOfContents": [
-      {
-        "chapter": "01",
-        "title": "Weeks 1-3: Hardware & SaaS Overhead Audit",
-        "pages": "1-34"
-      },
-      {
-        "chapter": "02",
-        "title": "Weeks 4-6: Email, Domain & Account Hardening",
-        "pages": "35-68"
-      },
-      {
-        "chapter": "03",
-        "title": "Weeks 7-9: Customer Communication & Booking Flows",
-        "pages": "69-106"
-      },
-      {
-        "chapter": "04",
-        "title": "Weeks 10-12: Unified Metric Dashboard & Handover",
-        "pages": "107-154"
-      }
-    ],
-    "sampleContent": [
-      {
-        "chapterTitle": "Weeks 1-3: SaaS Overhead Audit",
-        "pageNumber": 18,
-        "text": "The average 25-person firm pays for 38 distinct software subscriptions, 14 of which are either duplicates or billed for former employees. An immediate credit card subscription scrub typically recoups $900-$2,400 monthly in dead overhead."
-      }
-    ],
-    "includedAssets": [
-      "12-Week Sprint Tracking Spreadsheet (Trello / Notion / Excel)",
-      "SaaS Redundancy Audit Protocol",
-      "Contractor Non-Disclosure & Remote Access Agreement"
-    ],
-    "coverImage": "",
-    "coverDesign": {
-      "theme": "charcoal",
-      "bgColor": "#18181b",
-      "accentColor": "#fbbf24",
-      "textColor": "#f4f4f5",
-      "pattern": "minimalist-rule",
-      "showCoverImage": false,
-      "spineText": "90-DAY MODERNIZATION PLAYBOOK — JNJ"
-    },
-    "rating": 4.9,
-    "reviewCount": 22,
-    "salesCount": 160
   }
 ]

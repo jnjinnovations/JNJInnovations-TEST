@@ -40,6 +40,7 @@ jobs:
       - name: Build
         run: npm run build
         env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
           VITE_API_URL: ${{ secrets.VITE_API_URL || vars.VITE_API_URL }}
       - name: Ensure CNAME exists in dist
         run: |

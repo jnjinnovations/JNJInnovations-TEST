@@ -1,6 +1,12 @@
 import { EbookItem, OrderConfirmation } from '../types';
 import { DEFAULT_EBOOKS } from '../data/defaultEbooks';
 import { getApiUrl, isStaticHostWithoutBackend, getApiBaseUrl } from './apiConfig';
+import {
+  isAtlasDataApiConfigured,
+  testAtlasDataApiConnection,
+  fetchPlaybooksFromAtlasDataApi,
+  pushPlaybooksToAtlasDataApi
+} from './mongoDataApi';
 
 const STORAGE_KEY = 'jnj_innovations_ebook_catalog_v1';
 const ORDERS_KEY = 'jnj_innovations_ebook_orders_v1';
@@ -96,10 +102,24 @@ export async function testBackendHealth(): Promise<{ ok: boolean; message: strin
 }
 
 export async function getMongoDBStatus(force = false): Promise<MongoStatusResponse> {
+  // If MongoDB Atlas Data API is configured, ping Atlas Data API directly
+  if (isAtlasDataApiConfigured()) {
+    const dataApiCheck = await testAtlasDataApiConnection();
+    return {
+      connected: dataApiCheck.success,
+      cluster: "jnjtestcluster.695tiet.mongodb.net",
+      database: "jnj_innovations",
+      collection: "playbooks",
+      documentCount: dataApiCheck.count,
+      apiTargetUrl: "MongoDB Atlas HTTPS Data API (Direct Cloud Connection)",
+      error: dataApiCheck.success ? undefined : dataApiCheck.message
+    };
+  }
+
   const targetUrl = getApiUrl(`/api/mongodb/status${force ? '?force=1' : ''}`);
   const currentBase = getApiBaseUrl();
 
-  // If running on a static host without a configured backend
+  // If running on a static host without a configured backend or Data API
   if (isStaticHostWithoutBackend()) {
     return {
       connected: false,
@@ -108,8 +128,8 @@ export async function getMongoDBStatus(force = false): Promise<MongoStatusRespon
       collection: "playbooks",
       isStaticHostMissingBackend: true,
       apiTargetUrl: targetUrl,
-      error: "Static hosting (GitHub Pages) cannot execute Node.js backend code. Connect your deployed backend API URL (e.g., Cloud Run / Render) in Admin Settings.",
-      ipWhitelistGuide: "GitHub Pages is a static file host. Your backend must be hosted on a platform like Google Cloud Run or Render."
+      error: "Option 1 (MongoDB Data API) or Backend URL required on static hosting. Configure your Atlas Data API Key below for direct database access.",
+      ipWhitelistGuide: "Enable MongoDB Atlas Data API / HTTPS Endpoints on your cluster to connect directly without any server."
     };
   }
 
@@ -135,7 +155,7 @@ export async function getMongoDBStatus(force = false): Promise<MongoStatusRespon
         database: "jnj_innovations",
         collection: "playbooks",
         apiTargetUrl: targetUrl,
-        error: `HTTP 404: Endpoint not found at ${targetUrl}. When running on static hosting, please set your deployed backend API URL.`
+        error: `HTTP 404: Endpoint not found at ${targetUrl}. Connect via MongoDB Atlas Data API below.`
       };
     }
 
@@ -157,18 +177,35 @@ export async function getMongoDBStatus(force = false): Promise<MongoStatusRespon
       apiTargetUrl: targetUrl,
       isCorsError: isCorsOrNetwork,
       error: isCorsOrNetwork
-        ? `Network or CORS error connecting to ${targetUrl}. Verify your backend is running and CORS allows ${window.location.origin}.`
+        ? `Network or CORS error connecting to ${targetUrl}. Verify your backend is running or use MongoDB Atlas Data API.`
         : err.message
     };
   }
 }
 
 export async function syncWithMongoDB(strict = false): Promise<EbookItem[]> {
+  // 1. Direct MongoDB Atlas Data API (Option 1)
+  if (isAtlasDataApiConfigured()) {
+    try {
+      const books = await fetchPlaybooksFromAtlasDataApi();
+      if (books && books.length > 0) {
+        saveStoredEbooks(books);
+        return books;
+      }
+    } catch (err: any) {
+      console.warn('[Store] Atlas Data API sync failed:', err.message);
+      if (strict) {
+        throw err;
+      }
+    }
+    return getStoredEbooks();
+  }
+
   const url = getApiUrl(`/api/playbooks${strict ? '?strict=1' : ''}`);
 
   if (isStaticHostWithoutBackend()) {
     if (strict) {
-      throw new Error("Cannot sync with MongoDB Atlas: No backend API URL configured for this static deployment. Please configure your deployed backend API URL.");
+      throw new Error("Cannot sync with MongoDB Atlas: No Data API Key or backend configured for this static deployment.");
     }
     return getStoredEbooks();
   }
@@ -200,12 +237,17 @@ export async function syncWithMongoDB(strict = false): Promise<EbookItem[]> {
 }
 
 export async function syncCatalogToMongoDB(books: EbookItem[]): Promise<{ success: boolean; message: string; details?: any }> {
+  // 1. Direct MongoDB Atlas Data API (Option 1)
+  if (isAtlasDataApiConfigured()) {
+    return await pushPlaybooksToAtlasDataApi(books);
+  }
+
   const url = getApiUrl('/api/playbooks');
 
   if (isStaticHostWithoutBackend()) {
     return {
       success: false,
-      message: "Cannot push to MongoDB Atlas: Running on static hosting without a configured backend API URL. Please set your deployed backend URL in Admin Settings."
+      message: "Cannot push to MongoDB Atlas: Running on static hosting without a configured Atlas Data API or backend URL. Please set your credentials in Admin Settings."
     };
   }
 

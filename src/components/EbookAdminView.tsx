@@ -20,6 +20,12 @@ import {
   isStaticHostWithoutBackend
 } from '../utils/apiConfig';
 import {
+  getAtlasDataApiConfig,
+  saveAtlasDataApiConfig,
+  testAtlasDataApiConnection,
+  type AtlasDataApiConfig
+} from '../utils/mongoDataApi';
+import {
   Package,
   DollarSign,
   Palette,
@@ -113,9 +119,15 @@ export default function EbookAdminView({
   const [isSyncingMongo, setIsSyncingMongo] = useState(false);
   const [showMongoDetails, setShowMongoDetails] = useState(false);
 
-  // Production API URL settings (for GitHub Pages -> Cloud Run / Render routing)
+  // Option 1: MongoDB Atlas Data API configuration state
+  const [atlasDataApiConfig, setAtlasDataApiConfig] = useState<AtlasDataApiConfig>(() => getAtlasDataApiConfig());
+  const [showDataApiDrawer, setShowDataApiDrawer] = useState(false);
+  const [isTestingDataApi, setIsTestingDataApi] = useState(false);
+  const [dataApiTestResult, setDataApiTestResult] = useState<{ success: boolean; message: string; count?: number } | null>(null);
+
+  // Production API URL settings (for optional backend fallback)
   const [customApiUrl, setCustomApiUrl] = useState(() => getApiBaseUrl());
-  const [showApiSettings, setShowApiSettings] = useState(() => isStaticHostWithoutBackend());
+  const [showApiSettings, setShowApiSettings] = useState(false);
   const [isTestingApi, setIsTestingApi] = useState(false);
   const [apiTestResult, setApiTestResult] = useState<{ ok: boolean; message: string; latencyMs: number } | null>(null);
 
@@ -135,11 +147,48 @@ export default function EbookAdminView({
     checkMongo();
     const handleApiChanged = () => {
       setCustomApiUrl(getApiBaseUrl());
+      setAtlasDataApiConfig(getAtlasDataApiConfig());
       checkMongo(true);
     };
     window.addEventListener('jnj-api-config-changed', handleApiChanged);
-    return () => window.removeEventListener('jnj-api-config-changed', handleApiChanged);
+    window.addEventListener('jnj-atlas-data-api-updated', handleApiChanged);
+    return () => {
+      window.removeEventListener('jnj-api-config-changed', handleApiChanged);
+      window.removeEventListener('jnj-atlas-data-api-updated', handleApiChanged);
+    };
   }, []);
+
+  const handleSaveDataApiConfig = async () => {
+    saveAtlasDataApiConfig(atlasDataApiConfig);
+    showToast('MongoDB Atlas Data API configuration saved!');
+    setIsTestingDataApi(true);
+    setDataApiTestResult(null);
+    try {
+      const res = await testAtlasDataApiConnection(atlasDataApiConfig);
+      setDataApiTestResult(res);
+      if (res.success) {
+        showToast('Connected directly to MongoDB Atlas Data API!');
+      }
+    } catch (e: any) {
+      setDataApiTestResult({ success: false, message: e.message });
+    } finally {
+      setIsTestingDataApi(false);
+      checkMongo(true);
+    }
+  };
+
+  const handleTestDataApi = async () => {
+    setIsTestingDataApi(true);
+    setDataApiTestResult(null);
+    try {
+      const res = await testAtlasDataApiConnection(atlasDataApiConfig);
+      setDataApiTestResult(res);
+    } catch (e: any) {
+      setDataApiTestResult({ success: false, message: e.message });
+    } finally {
+      setIsTestingDataApi(false);
+    }
+  };
 
   const handleSaveApiUrl = () => {
     setApiBaseUrl(customApiUrl);
@@ -483,233 +532,6 @@ export default function EbookAdminView({
         </div>
       </section>
 
-      {/* MongoDB Atlas Real-Time Database Connection Banner */}
-      <section className="px-8 max-w-7xl mx-auto pt-6">
-        <div className={`rounded-xl border p-5 shadow-xs transition-colors ${
-          mongoStatus?.connected 
-            ? 'bg-emerald-50/60 border-emerald-200' 
-            : mongoStatus?.isIpWhitelistError 
-            ? 'bg-amber-50/80 border-amber-300' 
-            : mongoStatus?.isStaticHostMissingBackend
-            ? 'bg-sky-50/80 border-sky-300'
-            : 'bg-slate-50 border-slate-200'
-        }`}>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-start gap-3.5">
-              <div className={`p-2.5 rounded-lg shrink-0 ${
-                mongoStatus?.connected 
-                  ? 'bg-emerald-600 text-white' 
-                  : mongoStatus?.isIpWhitelistError 
-                  ? 'bg-amber-600 text-white' 
-                  : mongoStatus?.isStaticHostMissingBackend
-                  ? 'bg-sky-700 text-white'
-                  : 'bg-slate-700 text-white'
-              }`}>
-                <Database className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="font-display font-bold text-sm text-slate-900">
-                    MongoDB Atlas Playbook Database
-                  </h3>
-                  {mongoStatus?.connected ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      Live Cluster Connected {mongoStatus.documentCount !== undefined ? `(${mongoStatus.documentCount} items)` : ''}
-                    </span>
-                  ) : mongoStatus?.isStaticHostMissingBackend ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-100 text-sky-800 border border-sky-300">
-                      <Globe className="w-3 h-3 text-sky-600" />
-                      Static Hosting (GitHub Pages) · Backend URL Needed
-                    </span>
-                  ) : mongoStatus?.isIpWhitelistError ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
-                      <AlertCircle className="w-3 h-3 text-amber-600" />
-                      Network Access (IP Whitelist) Required
-                    </span>
-                  ) : mongoStatus?.isCorsError ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-300">
-                      <AlertCircle className="w-3 h-3 text-red-600" />
-                      CORS / Network Error
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">
-                      <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                      Local Fallback Active
-                    </span>
-                  )}
-                </div>
-
-                <p className="text-xs text-slate-600 mt-1 flex flex-wrap items-center gap-1.5">
-                  <span className="font-mono text-slate-700 font-medium">Cluster: jnjtestcluster.695tiet.mongodb.net</span>
-                  <span className="text-slate-400">·</span>
-                  <span className="font-mono text-slate-700">DB: jnj_innovations</span>
-                  <span className="text-slate-400">·</span>
-                  <span className="font-mono text-slate-700">Collection: playbooks</span>
-                  <span className="text-slate-400">·</span>
-                  <span className="font-mono text-slate-500">
-                    API: {customApiUrl || 'Same-origin (Built-in Server)'}
-                  </span>
-                </p>
-
-                {mongoStatus?.connected ? (
-                  <p className="text-xs text-emerald-700 font-medium mt-1">
-                    Playbook inventory, pricing adjustments, custom designs, and new titles automatically sync to your MongoDB Atlas collection.
-                  </p>
-                ) : mongoStatus?.isStaticHostMissingBackend ? (
-                  <div className="mt-2 text-xs text-sky-950 bg-sky-100/70 border border-sky-300/60 rounded-lg p-3">
-                    <p className="font-semibold flex items-center gap-1.5 text-sky-900">
-                      <Globe className="w-4 h-4 text-sky-600 shrink-0" />
-                      Why HTTP 404 occurs in GitHub Pages
-                    </p>
-                    <p className="mt-1 text-sky-800">
-                      GitHub Pages hosts static HTML/JS only and cannot execute the Node.js backend. To connect live MongoDB Atlas from your deployed website, deploy the backend to <strong>Google Cloud Run</strong> or <strong>Render</strong> and enter your backend URL below.
-                    </p>
-                  </div>
-                ) : mongoStatus?.isIpWhitelistError ? (
-                  <div className="mt-2 text-xs text-amber-900 bg-amber-100/70 border border-amber-300/60 rounded-lg p-3">
-                    <p className="font-semibold flex items-center gap-1.5 text-amber-950">
-                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                      MongoDB Atlas TLS alert 80: IP whitelist configuration needed
-                    </p>
-                    <p className="mt-1 text-amber-800">
-                      Your database credentials (<code className="font-mono font-semibold">jnjinnovations1_db_user</code>) are valid, but Atlas firewall blocks incoming traffic from new hosting IPs by default.
-                    </p>
-                    <div className="mt-2 text-[11px] font-medium text-amber-900 bg-white/70 p-2 rounded border border-amber-200">
-                      <strong>To enable:</strong> Log in to MongoDB Atlas &rarr; <strong>Security</strong> &rarr; <strong>Network Access</strong> &rarr; Click <strong>+ Add IP Address</strong> &rarr; Select <strong>Allow Access From Anywhere (0.0.0.0/0)</strong> &rarr; Confirm. Once saved, click &quot;Test Connection&quot; below.
-                    </div>
-                  </div>
-                ) : mongoStatus?.error ? (
-                  <p className="text-xs text-red-600 mt-1 font-mono">
-                    Status info: {mongoStatus.error}
-                  </p>
-                ) : null}
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 self-start md:self-center shrink-0">
-              <button
-                type="button"
-                onClick={() => checkMongo(true)}
-                disabled={isCheckingMongo}
-                className="flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-60"
-                title="Test live connectivity to MongoDB Atlas"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isCheckingMongo ? 'animate-spin' : ''}`} />
-                {isCheckingMongo ? 'Checking...' : 'Test Connection'}
-              </button>
-
-              <button
-                type="button"
-                onClick={handlePullFromMongo}
-                disabled={isSyncingMongo}
-                className="flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-60"
-                title="Fetch latest playbooks directly from MongoDB Atlas"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isSyncingMongo ? 'animate-spin' : ''}`} />
-                {isSyncingMongo ? 'Syncing...' : 'Sync from Atlas'}
-              </button>
-
-              <button
-                type="button"
-                onClick={handlePushToMongo}
-                disabled={isSyncingMongo}
-                className="flex items-center gap-1.5 bg-[#0A1628] hover:bg-slate-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-60"
-                title="Safely upsert all playbooks to MongoDB Atlas"
-              >
-                <Upload className="w-3.5 h-3.5 text-sky-400" />
-                Push Catalog to Atlas
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowApiSettings(!showApiSettings)}
-                className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors cursor-pointer ${
-                  showApiSettings
-                    ? 'bg-slate-800 text-white border-slate-800'
-                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
-                }`}
-                title="Configure Backend API endpoint URL"
-              >
-                <Server className="w-3.5 h-3.5 text-sky-500" />
-                {showApiSettings ? 'Hide API Config' : 'API Endpoint'}
-              </button>
-            </div>
-          </div>
-
-          {/* API Endpoint Configuration Drawer */}
-          {showApiSettings && (
-            <div className="mt-4 pt-4 border-t border-slate-200/80 space-y-3 animate-fade-in">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div>
-                  <h4 className="font-display font-semibold text-xs text-slate-900 flex items-center gap-1.5">
-                    <Server className="w-3.5 h-3.5 text-sky-600" />
-                    Production Backend API Configuration
-                  </h4>
-                  <p className="text-[11px] text-slate-500">
-                    Connects this frontend to your deployed Node.js / Express backend server running on Google Cloud Run, Render, or Railway.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleTestApiHealth}
-                    disabled={isTestingApi}
-                    className="flex items-center gap-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg cursor-pointer disabled:opacity-60"
-                  >
-                    <Activity className={`w-3 h-3 text-sky-500 ${isTestingApi ? 'animate-spin' : ''}`} />
-                    {isTestingApi ? 'Pinging...' : 'Ping /api/health'}
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                <div className="relative flex-1">
-                  <input
-                    type="url"
-                    value={customApiUrl}
-                    onChange={(e) => setCustomApiUrl(e.target.value)}
-                    placeholder="https://your-api-service.run.app (Leave blank for same-origin dev server)"
-                    className="w-full text-xs font-mono px-3 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0A1628]"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleSaveApiUrl}
-                    className="bg-[#0A1628] hover:bg-slate-800 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
-                  >
-                    Save & Test
-                  </button>
-                  {customApiUrl && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCustomApiUrl('');
-                        setApiBaseUrl('');
-                        showToast('Reset to default same-origin API');
-                        checkMongo(true);
-                      }}
-                      className="bg-white hover:bg-slate-50 text-slate-600 border border-slate-300 text-xs font-medium px-2.5 py-2 rounded-lg cursor-pointer whitespace-nowrap"
-                    >
-                      Reset
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {apiTestResult && (
-                <div className={`p-2.5 rounded-lg text-xs font-mono flex items-center gap-2 ${
-                  apiTestResult.ok ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'
-                }`}>
-                  {apiTestResult.ok ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />}
-                  <span>{apiTestResult.message}</span>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </section>
 
       {/* KPI Overview Cards */}
       <section className="px-8 max-w-7xl mx-auto pt-6">
