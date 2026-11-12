@@ -16,7 +16,6 @@ permissions:
   id-token: write
 
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
   group: "pages"
   cancel-in-progress: false
@@ -31,30 +30,37 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: 24
+
       - name: Install dependencies
         run: npm install
+
       - name: Build
         run: npm run build
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
           VITE_API_URL: ${{ secrets.VITE_API_URL || vars.VITE_API_URL }}
-      - name: Ensure CNAME exists in dist
+
+      - name: Ensure CNAME exists in dist if configured
         run: |
           if [ -f "public/CNAME" ] && [ ! -f "dist/CNAME" ]; then
             cp public/CNAME dist/CNAME
           elif [ -f "CNAME" ] && [ ! -f "dist/CNAME" ]; then
             cp CNAME dist/CNAME
           fi
+
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v5
+
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: './dist'
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
