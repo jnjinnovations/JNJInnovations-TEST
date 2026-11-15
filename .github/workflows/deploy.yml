@@ -25,12 +25,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Single deploy job since we're just deploying
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -59,6 +55,10 @@ jobs:
           elif [ -f "CNAME" ] && [ ! -f "dist/CNAME" ]; then
             cp CNAME dist/CNAME
           fi
+          if [ ! -f "dist/index.html" ]; then
+            echo "Build failed: dist/index.html missing"
+            exit 1
+          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v6
@@ -66,8 +66,18 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
         with:
+          name: github-pages
           path: './dist'
 
+  deploy:
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-24.04
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+        with:
+          artifact_name: github-pages
