@@ -9,6 +9,7 @@ import {
   generateDefaultEbooksCode,
   CommitResult
 } from '../utils/githubSync';
+import { clearPendingCatalogSync, getPendingSyncTags } from '../utils/ebookStore';
 import {
   GitCommit,
   GitBranch,
@@ -93,12 +94,21 @@ export default function GitHubCommitModal({
     setIsCommitting(true);
     setCommitResult(null);
 
-    const res = await commitCatalogToGitHub(config, ebooks, commitMessage);
+    const pendingTags = getPendingSyncTags();
+    const tagsToAppend = pendingTags.filter(tag => !commitMessage.includes(tag));
+    const fullCommitMessage = tagsToAppend.length > 0
+      ? `${commitMessage.trim()} ${tagsToAppend.join(' ')}`
+      : commitMessage;
+
+    const res = await commitCatalogToGitHub(config, ebooks, fullCommitMessage);
     setCommitResult(res);
     setIsCommitting(false);
 
-    if (res.success && onCommitSuccess) {
-      onCommitSuccess();
+    if (res.success) {
+      clearPendingCatalogSync();
+      if (onCommitSuccess) {
+        onCommitSuccess();
+      }
     }
   };
 
@@ -138,10 +148,10 @@ export default function GitHubCommitModal({
             </div>
             <div>
               <h3 className="font-display font-bold text-base text-white">
-                Commit Catalog to GitHub Repository
+                Commit Catalog to GitHub &amp; MongoDB
               </h3>
               <p className="text-[11px] text-slate-300">
-                Pushes your updated books, pricing, and designs directly into your GitHub repository.
+                Commits catalog updates to GitHub and triggers GitHub Actions to sync MongoDB Atlas on the backend.
               </p>
             </div>
           </div>
@@ -203,7 +213,7 @@ export default function GitHubCommitModal({
               </div>
 
               <p className="text-[11px] text-emerald-700 italic">
-                GitHub Actions has automatically triggered the build workflow (`deploy.yml`). Your live site will update in approximately 1-2 minutes.
+                GitHub Actions (`deploy.yml`) has been triggered on the backend. It will push your updated catalog to MongoDB Atlas and redeploy your GitHub Pages site in ~1-2 minutes.
               </p>
             </div>
           ) : commitResult && !commitResult.success ? (
@@ -237,7 +247,7 @@ export default function GitHubCommitModal({
                   </a>
                 </div>
                 <div className="font-mono text-slate-800 font-semibold flex items-center gap-1.5">
-                  <span className="text-[#0A1628]">src/data/defaultEbooks.ts</span>
+                  <span className="text-[#0A1628]">{config.catalogPath || 'public/catalog.json'}</span>
                   <span className="text-slate-400">·</span>
                   <span className="text-slate-500">{config.branch || 'main'} branch</span>
                   <span className="text-slate-400">·</span>
@@ -389,7 +399,7 @@ export default function GitHubCommitModal({
                       }}
                       className="rounded border-slate-300 text-[#0A1628] focus:ring-[#0A1628]"
                     />
-                    <span>Auto-commit whenever I update a playbook</span>
+                    <span>Auto-commit &amp; sync to MongoDB via GitHub Actions on every edit</span>
                   </label>
 
                   <button

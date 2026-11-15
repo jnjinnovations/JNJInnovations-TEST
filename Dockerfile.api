@@ -1,5 +1,5 @@
 # Production Container for Google Cloud Run, Render, or Railway
-FROM node:20-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 

@@ -10,13 +10,72 @@ import {
 
 const STORAGE_KEY = 'jnj_innovations_ebook_catalog_v1';
 const ORDERS_KEY = 'jnj_innovations_ebook_orders_v1';
+const BUILD_SIG_KEY = 'jnj_catalog_build_signature_v1';
+const DIRTY_FLAG_KEY = 'jnj_catalog_dirty_v1';
+const PENDING_TAGS_KEY = 'jnj_catalog_pending_tags_v1';
+
+function computeCatalogSignature(books: EbookItem[]): string {
+  return books
+    .map(b => `${b.id}:${b.price}:${b.salePrice ?? ''}:${b.isOnSale}:${b.inventoryCount}:${b.status}:${b.title}`)
+    .join('|');
+}
+
+export function hasPendingCatalogSync(): boolean {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem(DIRTY_FLAG_KEY) === '1';
+}
+
+export function getPendingSyncTags(): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(PENDING_TAGS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function addPendingSyncTag(tag: string): void {
+  if (typeof window === 'undefined' || !tag) return;
+  const tags = getPendingSyncTags();
+  if (!tags.includes(tag)) {
+    tags.push(tag);
+    localStorage.setItem(PENDING_TAGS_KEY, JSON.stringify(tags));
+  }
+}
+
+export function clearPendingCatalogSync(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(DIRTY_FLAG_KEY);
+  localStorage.removeItem(PENDING_TAGS_KEY);
+  window.dispatchEvent(new Event('jnj-pending-sync-changed'));
+}
+
+export function markPendingCatalogSync(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(DIRTY_FLAG_KEY, '1');
+  window.dispatchEvent(new Event('jnj-pending-sync-changed'));
+}
 
 export function getStoredEbooks(): EbookItem[] {
   if (typeof window === 'undefined') return DEFAULT_EBOOKS;
   try {
+    const currentBuildSig = computeCatalogSignature(DEFAULT_EBOOKS);
+    const savedBuildSig = localStorage.getItem(BUILD_SIG_KEY);
+    const isDirty = hasPendingCatalogSync();
+
+    // If a new deployment bundled updated MongoDB data and there are no pending uncommitted local edits, refresh cache
+    if (!isDirty && savedBuildSig !== currentBuildSig) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_EBOOKS));
+      localStorage.setItem(BUILD_SIG_KEY, currentBuildSig);
+      return DEFAULT_EBOOKS;
+    }
+
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_EBOOKS));
+      localStorage.setItem(BUILD_SIG_KEY, currentBuildSig);
       return DEFAULT_EBOOKS;
     }
     const parsed = JSON.parse(raw);
@@ -207,6 +266,21 @@ export async function syncWithMongoDB(strict = false): Promise<EbookItem[]> {
     if (strict) {
       throw new Error("Cannot sync with MongoDB Atlas: No Data API Key or backend configured for this static deployment.");
     }
+    // Load the latest static catalog built by GitHub Actions from MongoDB Atlas unless local edits are pending
+    if (!hasPendingCatalogSync()) {
+      try {
+        const res = await fetch('./catalog.json', { cache: 'no-store' });
+        if (res.ok) {
+          const staticBooks = await res.json();
+          if (Array.isArray(staticBooks) && staticBooks.length > 0) {
+            saveStoredEbooks(staticBooks);
+            return staticBooks;
+          }
+        }
+      } catch {
+        // Fallback to local storage / DEFAULT_EBOOKS
+      }
+    }
     return getStoredEbooks();
   }
 
@@ -291,14 +365,21 @@ export async function updateEbookItem(id: string, updates: Partial<EbookItem>): 
 
     if (!isStaticHostWithoutBackend()) {
       try {
-        fetch(getApiUrl(`/api/playbooks/${encodeURIComponent(id)}`), {
+        const res = await fetch(getApiUrl(`/api/playbooks/${encodeURIComponent(id)}`), {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updates)
-        }).catch(e => console.warn('[MongoDB] Background update warning:', e));
+        });
+        if (!res.ok) {
+          markPendingCatalogSync();
+          console.warn('[MongoDB] Server update returned HTTP', res.status);
+        }
       } catch (e) {
+        markPendingCatalogSync();
         console.warn('[MongoDB] Could not sync update to server:', e);
       }
+    } else {
+      markPendingCatalogSync();
     }
   }
   return books;
@@ -311,14 +392,21 @@ export async function addEbookItem(book: EbookItem): Promise<EbookItem[]> {
 
   if (!isStaticHostWithoutBackend()) {
     try {
-      fetch(getApiUrl('/api/playbooks'), {
+      const res = await fetch(getApiUrl('/api/playbooks'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(book)
-      }).catch(e => console.warn('[MongoDB] Background add warning:', e));
+      });
+      if (!res.ok) {
+        markPendingCatalogSync();
+        console.warn('[MongoDB] Server add returned HTTP', res.status);
+      }
     } catch (e) {
+      markPendingCatalogSync();
       console.warn('[MongoDB] Could not sync new book to server:', e);
     }
+  } else {
+    markPendingCatalogSync();
   }
 
   return books;
@@ -330,12 +418,22 @@ export async function deleteEbookItem(id: string): Promise<EbookItem[]> {
 
   if (!isStaticHostWithoutBackend()) {
     try {
-      fetch(getApiUrl(`/api/playbooks/${encodeURIComponent(id)}`), {
+      const res = await fetch(getApiUrl(`/api/playbooks/${encodeURIComponent(id)}`), {
         method: 'DELETE'
-      }).catch(e => console.warn('[MongoDB] Background delete warning:', e));
+      });
+      if (!res.ok) {
+        addPendingSyncTag(`[delete:${id}]`);
+        markPendingCatalogSync();
+        console.warn('[MongoDB] Server delete returned HTTP', res.status);
+      }
     } catch (e) {
+      addPendingSyncTag(`[delete:${id}]`);
+      markPendingCatalogSync();
       console.warn('[MongoDB] Could not sync delete to server:', e);
     }
+  } else {
+    addPendingSyncTag(`[delete:${id}]`);
+    markPendingCatalogSync();
   }
 
   return books;
@@ -348,12 +446,19 @@ export async function resetEbooksToDefault(): Promise<EbookItem[]> {
 
     if (!isStaticHostWithoutBackend()) {
       try {
-        fetch(getApiUrl('/api/playbooks/reset'), { method: 'POST' }).catch(e =>
-          console.warn('[MongoDB] Background reset warning:', e)
-        );
+        const res = await fetch(getApiUrl('/api/playbooks/reset'), { method: 'POST' });
+        if (!res.ok) {
+          addPendingSyncTag('[reset]');
+          markPendingCatalogSync();
+        }
       } catch (e) {
+        addPendingSyncTag('[reset]');
+        markPendingCatalogSync();
         console.warn('[MongoDB] Could not reset server collection:', e);
       }
+    } else {
+      addPendingSyncTag('[reset]');
+      markPendingCatalogSync();
     }
   }
   return DEFAULT_EBOOKS;

@@ -1,5 +1,5 @@
 # Production Container for Google Cloud Run, Render, Railway, or VPS
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
@@ -18,7 +18,7 @@ RUN npm run build
 # -------------------------------------------------------------
 # Runtime Stage
 # -------------------------------------------------------------
-FROM node:20-alpine AS runner
+FROM node:24-alpine AS runner
 
 WORKDIR /app
 

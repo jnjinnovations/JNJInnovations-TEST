@@ -15,6 +15,10 @@ permissions:
   pages: write
   id-token: write
 
+# Force all JavaScript actions to run on Node.js 24
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
 concurrency:
   group: "pages"
@@ -29,21 +33,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 24
 
       - name: Install dependencies
         run: npm install
 
-      - name: Build
+      - name: Build & Sync Catalog with MongoDB Atlas
         run: npm run build
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
           VITE_API_URL: ${{ secrets.VITE_API_URL || vars.VITE_API_URL }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
 
       - name: Ensure CNAME exists in dist if configured
         run: |
@@ -54,13 +61,13 @@ jobs:
           fi
 
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: './dist'
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

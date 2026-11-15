@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, type FormEvent, type ChangeEvent } from 'react';
+import { useState, useEffect, useMemo, useRef, type FormEvent, type ChangeEvent } from 'react';
 import { EbookItem, EbookCategory, EbookStatus, CoverDesignConfig } from '../types';
 import BookCoverVisual from './BookCoverVisual';
 import ImageUploader from './ImageUploader';
@@ -12,6 +12,10 @@ import {
   syncWithMongoDB,
   syncCatalogToMongoDB,
   testBackendHealth,
+  hasPendingCatalogSync,
+  clearPendingCatalogSync,
+  markPendingCatalogSync,
+  getPendingSyncTags,
   type MongoStatusResponse
 } from '../utils/ebookStore';
 import {
@@ -98,8 +102,10 @@ export default function EbookAdminView({
   // Selected book for detailed editing (e.g. design studio)
   const [selectedBookId, setSelectedBookId] = useState<string>(ebooks[0]?.id || '');
   
-  // Feedback toast
+  // Feedback toast & pending static sync state
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastTimerRef = useRef<number | null>(null);
+  const [pendingSync, setPendingSync] = useState<boolean>(() => hasPendingCatalogSync());
 
   // New book modal
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -150,11 +156,16 @@ export default function EbookAdminView({
       setAtlasDataApiConfig(getAtlasDataApiConfig());
       checkMongo(true);
     };
+    const handlePendingSyncChanged = () => {
+      setPendingSync(hasPendingCatalogSync());
+    };
     window.addEventListener('jnj-api-config-changed', handleApiChanged);
     window.addEventListener('jnj-atlas-data-api-updated', handleApiChanged);
+    window.addEventListener('jnj-pending-sync-changed', handlePendingSyncChanged);
     return () => {
       window.removeEventListener('jnj-api-config-changed', handleApiChanged);
       window.removeEventListener('jnj-atlas-data-api-updated', handleApiChanged);
+      window.removeEventListener('jnj-pending-sync-changed', handlePendingSyncChanged);
     };
   }, []);
 
@@ -244,9 +255,36 @@ export default function EbookAdminView({
     }
   };
 
-  const showToast = (msg: string) => {
+  const showToast = (msg: string, duration = 3500) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
+    if (toastTimerRef.current !== null) {
+      window.clearTimeout(toastTimerRef.current);
+    }
+    toastTimerRef.current = window.setTimeout(() => {
+      setToastMessage(null);
+      toastTimerRef.current = null;
+    }, duration);
+  };
+
+  const handleGitHubAutoSync = async (updatedList: EbookItem[], message: string): Promise<boolean> => {
+    const ghConfig = getGitHubConfig();
+    if (!ghConfig.autoCommit || !ghConfig.owner || !ghConfig.repo || !ghConfig.token) {
+      return false;
+    }
+    const pendingTags = getPendingSyncTags();
+    const tagsToAppend = pendingTags.filter(tag => !message.includes(tag));
+    const fullMessage = tagsToAppend.length > 0 ? `${message} ${tagsToAppend.join(' ')}` : message;
+
+    const res = await commitCatalogToGitHub(ghConfig, updatedList, fullMessage);
+    if (res.success) {
+      clearPendingCatalogSync();
+      setPendingSync(false);
+      showToast(`Committed to GitHub (${res.commitSha}) — syncing to MongoDB via GitHub Actions`, 4500);
+      return true;
+    } else {
+      showToast(`Saved locally, but GitHub auto-sync failed: ${res.message || res.error}`, 5500);
+      return true;
+    }
   };
 
   const selectedBook = useMemo(() => {
@@ -264,16 +302,15 @@ export default function EbookAdminView({
   const handleUpdateBook = async (id: string, updates: Partial<EbookItem>) => {
     const updatedList = await updateEbookItem(id, updates);
     onUpdateEbooks(updatedList);
-    showToast('Saved to MongoDB & catalog');
+    setPendingSync(hasPendingCatalogSync());
 
-    // If auto-commit is enabled in GitHub settings, sync directly to GitHub
-    const ghConfig = getGitHubConfig();
-    if (ghConfig.autoCommit && ghConfig.owner && ghConfig.repo && ghConfig.token) {
-      commitCatalogToGitHub(ghConfig, updatedList, `Auto-sync catalog updates via Admin Studio`).then(res => {
-        if (res.success) {
-          showToast(`Committed to GitHub (${res.commitSha})`);
-        }
-      });
+    const autoSynced = await handleGitHubAutoSync(updatedList, 'Auto-sync catalog updates via Admin Studio');
+    if (autoSynced) return;
+
+    if (isStaticHostWithoutBackend() || hasPendingCatalogSync()) {
+      showToast('Saved locally. Click "Commit to GitHub" to sync changes to MongoDB.', 5500);
+    } else {
+      showToast('Saved to MongoDB & catalog');
     }
   };
 
@@ -351,16 +388,15 @@ export default function EbookAdminView({
     setSelectedBookId(newBook.id);
     setNewBookCoverImage('');
     setIsAddModalOpen(false);
-    showToast(`Created & saved playbook to MongoDB: ${newBook.title}`);
+    setPendingSync(hasPendingCatalogSync());
 
-    // If auto-commit is enabled in GitHub settings, sync directly to GitHub
-    const ghConfig = getGitHubConfig();
-    if (ghConfig.autoCommit && ghConfig.owner && ghConfig.repo && ghConfig.token) {
-      commitCatalogToGitHub(ghConfig, updated, `Add playbook "${newBook.title}" via Admin Studio`).then(res => {
-        if (res.success) {
-          showToast(`Committed "${newBook.title}" to GitHub!`);
-        }
-      });
+    const autoSynced = await handleGitHubAutoSync(updated, `Add playbook "${newBook.title}" via Admin Studio`);
+    if (autoSynced) return;
+
+    if (isStaticHostWithoutBackend() || hasPendingCatalogSync()) {
+      showToast(`Saved "${newBook.title}" locally. Click "Commit to GitHub" to sync to MongoDB.`, 6000);
+    } else {
+      showToast(`Created & saved playbook to MongoDB: ${newBook.title}`);
     }
   };
 
@@ -372,7 +408,16 @@ export default function EbookAdminView({
       if (selectedBookId === id && updated.length > 0) {
         setSelectedBookId(updated[0].id);
       }
-      showToast('Book deleted from MongoDB and catalog');
+      setPendingSync(hasPendingCatalogSync());
+
+      const autoSynced = await handleGitHubAutoSync(updated, `Delete playbook "${title}" [delete:${id}] via Admin Studio`);
+      if (autoSynced) return;
+
+      if (isStaticHostWithoutBackend() || hasPendingCatalogSync()) {
+        showToast(`Deleted "${title}" locally. Click "Commit to GitHub" to sync deletion to MongoDB.`, 6000);
+      } else {
+        showToast('Book deleted from MongoDB and catalog');
+      }
     }
   };
 
@@ -382,7 +427,16 @@ export default function EbookAdminView({
       const defaults = await resetEbooksToDefault();
       onUpdateEbooks(defaults);
       setSelectedBookId(defaults[0]?.id || '');
-      showToast('Reset catalog to defaults in MongoDB');
+      setPendingSync(hasPendingCatalogSync());
+
+      const autoSynced = await handleGitHubAutoSync(defaults, 'Reset catalog to factory defaults [reset] via Admin Studio');
+      if (autoSynced) return;
+
+      if (isStaticHostWithoutBackend() || hasPendingCatalogSync()) {
+        showToast('Reset catalog locally. Click "Commit to GitHub" to sync reset to MongoDB.', 6000);
+      } else {
+        showToast('Reset catalog to defaults in MongoDB');
+      }
     }
   };
 
@@ -409,9 +463,26 @@ export default function EbookAdminView({
         if (Array.isArray(parsed) && parsed.length > 0) {
           saveStoredEbooks(parsed);
           onUpdateEbooks(parsed);
-          await syncCatalogToMongoDB(parsed);
           setSelectedBookId(parsed[0].id);
-          showToast('Imported catalog and saved to MongoDB Atlas');
+          if (isStaticHostWithoutBackend()) {
+            markPendingCatalogSync();
+            setPendingSync(true);
+            const autoSynced = await handleGitHubAutoSync(parsed, `Import catalog (${parsed.length} playbooks) via Admin Studio`);
+            if (!autoSynced) {
+              showToast('Imported locally. Click "Commit to GitHub" to sync to MongoDB.', 6000);
+            }
+          } else {
+            const res = await syncCatalogToMongoDB(parsed);
+            if (res.success) {
+              clearPendingCatalogSync();
+              setPendingSync(false);
+              showToast('Imported catalog and saved to MongoDB Atlas');
+            } else {
+              markPendingCatalogSync();
+              setPendingSync(true);
+              showToast(`Imported locally; MongoDB sync pending: ${res.message}`, 5500);
+            }
+          }
         } else {
           alert('Invalid catalog JSON format.');
         }
@@ -480,9 +551,17 @@ export default function EbookAdminView({
       
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#0A1628] text-white px-5 py-3 rounded-lg shadow-xl border border-slate-700 flex items-center gap-2 text-xs font-medium animate-fade-in">
-          <Check className="w-4 h-4 text-emerald-400" />
-          {toastMessage}
+        <div className="fixed bottom-6 right-6 z-50 bg-[#0A1628] text-white px-5 py-3 rounded-lg shadow-xl border border-slate-700 flex items-center gap-3 text-xs font-medium animate-fade-in">
+          <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{toastMessage}</span>
+          {pendingSync && isStaticHostWithoutBackend() && (
+            <button
+              onClick={() => setIsGitHubModalOpen(true)}
+              className="ml-1 bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1 rounded text-[11px] font-bold uppercase tracking-wider shrink-0 cursor-pointer"
+            >
+              Commit Now
+            </button>
+          )}
         </div>
       )}
 
@@ -511,6 +590,11 @@ export default function EbookAdminView({
             >
               <GitCommit className="w-3.5 h-3.5" />
               Commit to GitHub
+              {pendingSync && (
+                <span className="ml-1 bg-amber-300 text-slate-950 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded uppercase">
+                  Sync Pending
+                </span>
+              )}
             </button>
 
             <button
@@ -1577,7 +1661,11 @@ export default function EbookAdminView({
         isOpen={isGitHubModalOpen}
         onClose={() => setIsGitHubModalOpen(false)}
         ebooks={ebooks}
-        onCommitSuccess={() => showToast('Committed & deployed to GitHub!')}
+        onCommitSuccess={() => {
+          clearPendingCatalogSync();
+          setPendingSync(false);
+          showToast('Committed to GitHub — GitHub Actions is syncing MongoDB Atlas & redeploying!', 5000);
+        }}
       />
 
     </div>
