@@ -71,26 +71,29 @@ export default function GitHubCommitModal({
   if (!isOpen) return null;
 
   const handleSaveConfig = () => {
-    saveGitHubConfig(config);
+    const normalized = saveGitHubConfig(config);
+    setConfig(normalized);
+    return normalized;
   };
 
   const handleTestConnection = async () => {
     setIsTesting(true);
     setTestResult(null);
-    handleSaveConfig();
-    const result = await testGitHubAccess(config);
+    const normalized = handleSaveConfig();
+    const result = await testGitHubAccess(normalized);
     setTestResult(result);
     setIsTesting(false);
     if (result.success && result.repoDetails?.defaultBranch) {
-      if (!config.branch) {
-        setConfig(prev => ({ ...prev, branch: result.repoDetails!.defaultBranch }));
+      if (!normalized.branch) {
+        const updated = saveGitHubConfig({ ...normalized, branch: result.repoDetails.defaultBranch });
+        setConfig(updated);
       }
     }
   };
 
   const handleCommit = async (e: FormEvent) => {
     e.preventDefault();
-    handleSaveConfig();
+    const normalized = handleSaveConfig();
     setIsCommitting(true);
     setCommitResult(null);
 
@@ -100,7 +103,7 @@ export default function GitHubCommitModal({
       ? `${commitMessage.trim()} ${tagsToAppend.join(' ')}`
       : commitMessage;
 
-    const res = await commitCatalogToGitHub(config, ebooks, fullCommitMessage);
+    const res = await commitCatalogToGitHub(normalized, ebooks, fullCommitMessage);
     setCommitResult(res);
     setIsCommitting(false);
 
@@ -109,6 +112,8 @@ export default function GitHubCommitModal({
       if (onCommitSuccess) {
         onCommitSuccess();
       }
+    } else {
+      setShowConfigSettings(true);
     }
   };
 
@@ -219,9 +224,12 @@ export default function GitHubCommitModal({
           ) : commitResult && !commitResult.success ? (
             <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 text-xs text-red-800">
               <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-              <div>
+              <div className="space-y-1">
                 <span className="font-bold block">Commit Failed</span>
-                <p className="mt-0.5">{commitResult.message}</p>
+                <p className="mt-0.5 leading-relaxed">{commitResult.message}</p>
+                <p className="text-[11px] text-red-700/90">
+                  Verify your GitHub Owner, Repository Name, Target Branch, and Token below, then click <strong>Test GitHub Connection</strong>.
+                </p>
               </div>
             </div>
           ) : null}
@@ -365,7 +373,7 @@ export default function GitHubCommitModal({
                     </a>
                   </div>
                   <p className="text-[11px] text-sky-800 leading-relaxed">
-                    Click the link above to open GitHub with the <code>repo</code> scope pre-selected. Click <strong>Generate token</strong> at the bottom of the GitHub page, then paste the generated token into the field above.
+                    Click the link above to create a classic token with the <code>repo</code> scope pre-selected. If using a fine-grained token instead, grant <strong>Contents: Read and write</strong> permission on the target repository above.
                   </p>
                 </div>
 
