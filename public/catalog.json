@@ -472,5 +472,69 @@
     "rating": 4.9,
     "reviewCount": 22,
     "salesCount": 160
+  },
+  {
+    "id": "test-1601",
+    "author": "JNJ Innovations Team",
+    "badgeText": "New Release",
+    "category": "Automation",
+    "coverDesign": {
+      "theme": "navy",
+      "bgColor": "#0A1628",
+      "accentColor": "#38bdf8",
+      "textColor": "#ffffff",
+      "pattern": "blueprint-grid",
+      "showCoverImage": true
+    },
+    "coverImage": "",
+    "description": "Strategic field manual with practical architectures, calculation spreadsheets, and implementation roadmaps.",
+    "edition": "2026 Edition",
+    "format": [
+      "PDF",
+      "ePub",
+      "Implementation Workbook"
+    ],
+    "includedAssets": [
+      "Excel ROI Model",
+      "Implementation Checklist PDF"
+    ],
+    "inventoryCount": 50,
+    "isOnSale": false,
+    "isUnlimited": false,
+    "longDescription": "Comprehensive guide tailored for Michigan small business owners, operators, and IT leaders.",
+    "pages": 180,
+    "price": 39,
+    "publishedYear": "2026",
+    "rating": 5,
+    "reviewCount": 1,
+    "salesCount": 0,
+    "sampleContent": [
+      {
+        "chapterTitle": "Chapter 1: Foundational Assessment",
+        "pageNumber": 10,
+        "text": "Begin by measuring baseline workflow cycle times before committing software licenses."
+      }
+    ],
+    "sku": "JNJ-BK-007",
+    "status": "active",
+    "subtitle": "Executive Technology Field Manual",
+    "tableOfContents": [
+      {
+        "chapter": "01",
+        "title": "Foundational Assessment",
+        "pages": "1-30"
+      },
+      {
+        "chapter": "02",
+        "title": "Core Implementation Architecture",
+        "pages": "31-80"
+      },
+      {
+        "chapter": "03",
+        "title": "Measurement & Verification",
+        "pages": "81-140"
+      }
+    ],
+    "title": "TEST"
   }
 ]
